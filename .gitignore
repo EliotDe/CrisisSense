@@ -1,0 +1,33 @@
+# Build output
+build/
+*.elf
+*.bin
+*.hex
+*.map
+*.o
+*.a
+
+# Debug files
+*.lst
+*.d
+*.su
+*.dep
+
+# VSCode
+.vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/tasks.json
+!.vscode/launch.json
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary / backup files
+*~
+*.swp
