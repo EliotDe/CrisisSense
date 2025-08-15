@@ -18,11 +18,12 @@ jobs:
       - name: Install ARM GCC Toolchain and Dev Tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y \ 
+          sudo apt-get install -y \
             gcc-arm-none-eabi \
-            binutils-arm-none-eabi \
-            openocd 
-          sudo snap install cppcheck --classic
+            libnewlib-arm-none-eabi \
+            libstdc++-arm-none-eabi-newlib \
+            openocd \
+            cppcheck
         
       - name: Verify Toolchain Installation
         run: |
