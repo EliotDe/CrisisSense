@@ -15,11 +15,19 @@ jobs:
           key: ${{ runner.os }}-apt-embedded-${{ hashFiles('.github/workflows/ci.yml') }}
      
 
-      - name: Install ARM GCC Toolchain
+      - name: Install ARM GCC Toolchain and Dev Tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc-arm-none-eabi binutils-arm-none-eabi
+          sudo apt-get install -y \ 
+          gcc-arm-none-eabi \
+          binutils-arm-none-eabi \
+          cppcheck \
+          openocd
         
+      - name: Verify Toolchain Installation
+        run: |
+          arm-none-eabi-gcc --version
+          cppcheck --version
 
       - name: Cache build objects
         uses: actions/cache@v4
