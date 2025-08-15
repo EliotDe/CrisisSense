@@ -33,7 +33,7 @@ jobs:
             cppcheck
           
           echo "APT cache size:"
-          du -sh ~/apt-cach
+          du -sh ~/apt-cache
 
 
       - name: Verify Toolchain Installation
