@@ -20,9 +20,9 @@ void main(){
     RCC -> AHB2ENR |= RCC_AHB2ENR_GPIOBEN
 
     /* clear the value for the green led in moder register */
-    GPIOB -> MODER &= ~GPIO_MODER_MODE3;
+    GPIOB -> MODER &= ~GPIO_MODER_MODE3
     /* set the mode to general purpose output */
-    GPIOB -> MODER |= (OUTPUT_MODE << GPIO_MODER_MODE3_Pos);
+    GPIOB -> MODER |= (OUTPUT_MODE << GPIO_MODER_MODE3_Pos)
 
     // ten blinks
     for(i=0; i < 10; ++i){
