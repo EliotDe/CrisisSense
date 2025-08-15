@@ -1,0 +1,56 @@
+on: [push, pull_request]
+jobs:
+  build_analyse_test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the Repo
+        uses: actions/checkout@v3
+      
+      - name: Cache APT packages
+        uses: actions/cache@v3
+        with:
+          path: |
+            /var/cache/apt
+            /var/lib/apt/lists
+          key: ${{ runner.os }}-apt-embedded-${{ hashFiles('.github/workflows/ci.yml') }}
+     
+
+      - name: Install ARM GCC Toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-arm-none-eabi binutils-arm-none-eabi
+        
+
+      - name: Cache build objects
+        uses: actions/cache@v3
+        with:
+          path: build/obj
+          key: ${{ runner.os }}-obj-${{ hashFiles('**/*.c', '**/*.h', 'Makefile') }}
+          restore-keys: |
+            ${{ runner.os }}-obj-
+      
+
+      - name: Build Project
+        run: make
+
+      - name: Static Analysis
+        run: make cppcheck
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: firmware
+          path: |
+            build/crisissense.elf
+            build/crisissense.bin
+            build/crisissense.map
+          retention-days: 30
+          
+      - name: Upload Build info
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-info-${{ github.sha }}
+          path: |
+            .github/workflows/ci.yml
+            makefile
+          retention-days: 7

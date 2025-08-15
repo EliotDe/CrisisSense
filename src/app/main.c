@@ -6,7 +6,7 @@
 
 #define BLINK_DELAY 1000000
 
-void delay(volatile uint32_t d);
+static void delay(volatile uint32_t d);
 
 void main(){
     /*//\\ //\\ //\\ //\\ //\\ //\\ //\\ //\\ //\\ //\\*/
@@ -26,7 +26,7 @@ void main(){
 
     // ten blinks
     for(i=0; i < 10; ++i){
-        TOGGLE_BIT(GPIOA -> ODR, 12);
+        TOGGLE_BIT(GPIOB -> ODR, 3);
         delay(BLINK_DELAY);
     }
 
@@ -34,7 +34,7 @@ void main(){
     while(1);
 }
 
-void delay(volatile uint32_t d){
+static void delay(volatile uint32_t d){
     while (d--)
         __NOP();
 }

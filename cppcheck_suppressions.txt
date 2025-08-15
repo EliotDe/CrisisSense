@@ -1,0 +1,21 @@
+// Suppress missing system includes
+missingIncludeSystem
+
+// Suppress all CMSIS-related files 
+*:*stm32l4*
+*:*core_cm*
+*:*system_stm32*
+*:*startup_stm32*
+
+// Suppress unused functions
+unusedFunction
+
+// Suppress unmatched suppressions
+unmatchedSuppression
+
+// Suppress specific CMSIS patterns
+*:*/cmsis/*
+*:*/CMSIS/*
+
+// Suppress too many configs issues
+toomanyconfigs
