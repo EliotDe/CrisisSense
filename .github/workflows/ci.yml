@@ -6,25 +6,24 @@ jobs:
       - name: Checkout the Repo
         uses: actions/checkout@v4
       
-      - name: Cache APT packages
+
+      # Alternative method - cache downloaded .deb files only
+      - name: Cache APT packages (alternative method)
         uses: actions/cache@v4
         with:
-          path: |
-            /var/cache/apt/archives
-            /var/lib/apt/lists
-          key: ${{ runner.os }}-apt-embedded-${{ hashFiles('.github/workflows/ci.yml') }}
+          path: ~/apt-cache
+          key: ${{ runner.os }}-apt-debs-v1-${{ hashFiles('.github/workflows/ci.yml') }}
           restore-keys: |
-            ${{ runner.os }}-apt-embedded-
-     
-      
-      # Clean APT cache before installing to avoid conflicts
-      - name: Prepare APT cache
-        run: |
-          sudo apt-get clean
-          sudo rm -rf /var/lib/apt/lists/*
+            ${{ runner.os }}-apt-debs-v1-
+        continue-on-error: true
 
-      - name: Install ARM GCC Toolchain and Dev Tools
+      - name: Install ARM GCC Toolchain with custom cache
         run: |
+          mkdir -p ~/apt-cache
+          
+          sudo mkdir -p /etc/apt/apt.conf.d
+          echo "Dir::Cache::Archives \"$HOME/apt-cache\";" | sudo tee /etc/apt/apt.conf.d/99cache
+          
           sudo apt-get update
           sudo apt-get install -y \
             gcc-arm-none-eabi \
@@ -32,7 +31,11 @@ jobs:
             libstdc++-arm-none-eabi-newlib \
             openocd \
             cppcheck
-        
+          
+          echo "APT cache size:"
+          du -sh ~/apt-cach
+
+
       - name: Verify Toolchain Installation
         run: |
           arm-none-eabi-gcc --version
