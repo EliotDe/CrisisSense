@@ -4,10 +4,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the Repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       
       - name: Cache APT packages
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             /var/cache/apt
@@ -22,7 +22,7 @@ jobs:
         
 
       - name: Cache build objects
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: build/obj
           key: ${{ runner.os }}-obj-${{ hashFiles('**/*.c', '**/*.h', 'Makefile') }}
@@ -37,7 +37,7 @@ jobs:
         run: make cppcheck
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: firmware
           path: |
@@ -47,7 +47,7 @@ jobs:
           retention-days: 30
           
       - name: Upload Build info
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: build-info-${{ github.sha }}
           path: |
