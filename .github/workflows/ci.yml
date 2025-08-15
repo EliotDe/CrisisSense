@@ -16,6 +16,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-apt-embedded-
      
+      
+      # Clean APT cache before installing to avoid conflicts
+      - name: Prepare APT cache
+        run: |
+          sudo apt-get clean
+          sudo rm -rf /var/lib/apt/lists/*
 
       - name: Install ARM GCC Toolchain and Dev Tools
         run: |
