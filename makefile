@@ -1,5 +1,5 @@
 # Directories
-CMSIS_ROOT_DIR = C:/Users/slipj/cmsis/stm32l4
+CMSIS_ROOT_DIR = cmsis
 CMSIS_CORE_DIR = $(CMSIS_ROOT_DIR)/core
 CMSIS_DEVICE_DIR = $(CMSIS_ROOT_DIR)/device
 CMSIS_DEVICE_INCLUDE_DIR = $(CMSIS_DEVICE_DIR)/Include
