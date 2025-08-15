@@ -1,7 +1,7 @@
 on: [push, pull_request]
 jobs:
   build_analyse_test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout the Repo
         uses: actions/checkout@v4
