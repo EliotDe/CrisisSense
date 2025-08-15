@@ -1,7 +1,7 @@
 on: [push, pull_request]
 jobs:
   build_analyse_test:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout the Repo
         uses: actions/checkout@v4
@@ -22,7 +22,7 @@ jobs:
             gcc-arm-none-eabi \
             binutils-arm-none-eabi \
             openocd \
-            cppcheck
+          sudo snap install cppcheck --classic
         
       - name: Verify Toolchain Installation
         run: |
