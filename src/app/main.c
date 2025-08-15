@@ -17,7 +17,7 @@ void main(){
     int i;
 
     /* configure clock for AHB1 bus */
-    RCC -> AHB2ENR |= RCC_AHB2ENR_GPIOBEN
+    RCC -> AHB2ENR |= RCC_AHB2ENR_GPIOBEN;
 
     /* clear the value for the green led in moder register */
     GPIOB -> MODER &= ~GPIO_MODER_MODE3;
