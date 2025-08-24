@@ -52,8 +52,8 @@ typedef struct{
 /*=============CONFIGURATION FUNCTIONS=============*/
 
 uint8_t usart_config_line(usart_config_t* cfg, usart_err_t* error);
-uint8_t usart_config_baudrate(USART_TypeDef* usart_line, uint32_t baud_rate, usart_oversampling_t over8, usart_err_t* error);
-uint8_t usart_config_dma(USART_TypeDef* usart_line, usart_err_t* error);
+static uint8_t usart_config_baudrate(const USART_TypeDef* usart_line, uint32_t baud_rate, usart_oversampling_t over8, usart_err_t* error);
+static uint8_t usart_config_dma(const USART_TypeDef* usart_line, usart_err_t* error);
 /*==============CONFIGURATION HELPERS==============*/
 
 static inline void usart_register_set_bit(uint32_t* reg, uint32_t bit){*reg |= bit;}

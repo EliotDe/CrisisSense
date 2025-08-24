@@ -35,37 +35,37 @@ uint8_t usart_config_line(usart_config_t* cfg, usart_err_t* error){
 
     // oversampling
     if (cfg->oversampling == USART_OVER16)
-        usart_cr1_clear_bit(&cr1, USART_CR1_OVER8);
+        usart_register_clear_bit(&cr1, USART_CR1_OVER8);
     else
-        usart_cr1_set_bit(&cr1, USART_CR1_OVER8);
+        usart_register_set_bit(&cr1, USART_CR1_OVER8);
 
     // word length
 
     // Clear both M0 and M1 first
-    usart_cr1_clear_bit(&cr1, USART_CR1_M0);
-    usart_cr1_clear_bit(&cr1, USART_CR1_M1);
+    usart_register_clear_bit(&cr1, USART_CR1_M0);
+    usart_register_clear_bit(&cr1, USART_CR1_M1);
 
     if (cfg->word_length == USART_WORD_LENGTH_7) {
-        usart_cr1_set_bit(&cr1, USART_CR1_M1);      // M1=1, M0=0
+        usart_register_set_bit(&cr1, USART_CR1_M1);      // M1=1, M0=0
     } else if (cfg->word_length == USART_WORD_LENGTH_9) {
-        usart_cr1_set_bit(&cr1, USART_CR1_M0);      // M1=0, M0=1
+        usart_register_set_bit(&cr1, USART_CR1_M0);      // M1=0, M0=1
     }
 
     // Parity
     if (cfg->parity == USART_PARITY_NONE){
-        usart_cr1_clear_bit(&cr1, USART_CR1_PCE);
+        usart_register_clear_bit(&cr1, USART_CR1_PCE);
     }
     else{
-        usart_cr1_set_bit(&cr1, USART_CR1_PCE);
+        usart_register_set_bit(&cr1, USART_CR1_PCE);
         if (cfg->parity == USART_PARITY_EVEN)
-            usart_cr1_clear_bit(&cr1, USART_CR1_PS);
+            usart_register_clear_bit(&cr1, USART_CR1_PS);
         else
-            usart_cr1_set_bit(&cr1, USART_CR1_PS);
+            usart_register_set_bit(&cr1, USART_CR1_PS);
     }
 
     // Stop Bits
-    usart_cr2_clear_bit(&cr2, USART_CR2_STOP_Msk);
-    usart_cr2_set_bit(&cr2, cfg->stop_bits << USART_CR2_STOP_Pos);
+    usart_register_clear_bit(&cr2, USART_CR2_STOP_Msk);
+    usart_register_set_bit(&cr2, cfg->stop_bits << USART_CR2_STOP_Pos);
 
     // Configure Baud Rate
     usart_err_t baud_error = USART_OK;
@@ -87,7 +87,8 @@ uint8_t usart_config_line(usart_config_t* cfg, usart_err_t* error){
     return 1;
 }
 
-uint8_t usart_config_baudrate(USART_TypeDef* usart_line, uint32_t baud_rate, usart_oversampling_t over8, usart_err_t* error){
+// usart_line pointer is const to pass static analysis check in ci/cd when pushing  - this will change
+static uint8_t usart_config_baudrate(const USART_TypeDef* usart_line, uint32_t baud_rate, usart_oversampling_t over8, usart_err_t* error){
     if (!usart_line || !baud_rate || (over8 != USART_OVER16 && over8 != USART_OVER8)){
         if (error) *error = USART_ERR_INVALID_PARAM;
         return 0;
@@ -98,13 +99,14 @@ uint8_t usart_config_baudrate(USART_TypeDef* usart_line, uint32_t baud_rate, usa
     return 1;
 }
 
-uint8_t usart_config_dma(USART_TypeDef* usart_line, usart_err_t* error){
+// usart_line pointer is const to pass static analysis check in ci/cd when pushing  - this will change
+static uint8_t usart_config_dma(const USART_TypeDef* usart_line, usart_err_t* error){
     if (!usart_line){
         if (error) *error = USART_ERR_INVALID_PARAM;
         return 0;
     }
 
     // placeholder
-    
+
     return 1;
 }
