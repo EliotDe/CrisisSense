@@ -104,7 +104,7 @@ obj-deubg:
 clean:
 	rm -rf $(BUILD_DIR)
 
-flash: $(BIN)
+flash: $(ELF)
 	openocd -f interface/stlink.cfg -f target/stm32l4x.cfg \
 		-c "program $< verify reset exit"
 

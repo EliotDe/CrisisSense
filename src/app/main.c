@@ -9,7 +9,6 @@ void main(){
     /*//\\ //\\  Theres nothing here yet //\\ //\\ //\\ -- there is now*/
     /*\\// \\// \\// \\// \\// \\// \\// \\// \\// \\//*/
     /*//\\ //\\ //\\ //\\ //\\ //\\ //\\ //\\ //\\ //\\*/
-    int i;
 
     /* configure clock for AHB1 bus */
     RCC -> AHB2ENR |= RCC_AHB2ENR_GPIOBEN;
