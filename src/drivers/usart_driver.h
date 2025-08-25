@@ -40,10 +40,32 @@ typedef enum{
     USART_STOP_1_HALF = 3
 }usart_stop_bits_t;
 
+typedef enum{
+    USART_DMA_NONE, 
+    USART_DMA_RX,   // Use DMA on received data
+    USART_DMA_TX    // Use DMA on transmitted data
+}usart_dma_t;
+
+typedef enum{
+    USART_AUTOBAUD_DISABLED,
+    USART_AUTOBAUD_START_BIT,
+    USART_AUTOBAUD_FALLING_EDGE = USART_CR2_ABRMODE_0,
+    USART_AUTOBAUD_7F_FRAME = USART_CR2_ABRMODE_1,
+    USART_AUTOBAUD_55_FRAME = (USART_CR2_ABRMODE_0 | USART_CR2_ABRMODE_1)
+}usart_autobaud_t; 
+
+typedef struct{
+    uint32_t baud_rate;
+    usart_oversampling_t oversampling;
+    uint32_t f_clk;
+} usart_baud_config_t;
+
 typedef struct{
     USART_TypeDef* usart_line;
     usart_parity_t parity;
+    usart_autobaud_t auto_baud;
     uint32_t baud_rate;
+    uint32_t f_clk;
     usart_oversampling_t oversampling;
     usart_word_length_t word_length;
     usart_stop_bits_t stop_bits;
@@ -52,8 +74,7 @@ typedef struct{
 /*=============CONFIGURATION FUNCTIONS=============*/
 
 uint8_t usart_config_line(usart_config_t* cfg, usart_err_t* error);
-static uint8_t usart_config_baudrate(const USART_TypeDef* usart_line, uint32_t baud_rate, usart_oversampling_t over8, usart_err_t* error);
-static uint8_t usart_config_dma(const USART_TypeDef* usart_line, usart_err_t* error);
+
 /*==============CONFIGURATION HELPERS==============*/
 
 static inline void usart_register_set_bit(uint32_t* reg, uint32_t bit){*reg |= bit;}

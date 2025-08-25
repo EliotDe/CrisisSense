@@ -1,0 +1,6 @@
+#ifndef MOCK_STM32L432XX_H
+#define MOCK_STM32L432XX_H
+
+
+
+#endif

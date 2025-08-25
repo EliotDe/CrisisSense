@@ -87,7 +87,7 @@ $(BIN): $(ELF)
 
 
 # Phonies
-.PHONY: all clean flash cppcheck cppcheck-debug obj-debug
+.PHONY: all clean flash cppcheck cppcheck-debug obj-debug setup-unity
 
 all: $(ELF) $(BIN)
 
@@ -121,3 +121,8 @@ cppcheck-debug:
 	@echo $(CPPCHECK_SRC)
 	@echo "Include dirs:"
 	@echo $(INCLUDE_DIRS)
+
+setup-unity:
+	@echo "Setting up unity ..."
+	git clone https://github.com/ThrowTheSwitch/Unity.git unity
+	@echo "Unity setup complete"
