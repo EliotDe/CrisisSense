@@ -65,6 +65,19 @@ typedef struct {
 #define USART_CR2_ABRMODE_0           (0x1UL << USART_CR2_ABRMODE_Pos)         /*!< 0x00200000 */
 #define USART_CR2_ABRMODE_1           (0x2UL << USART_CR2_ABRMODE_Pos) 
 
+// CR3 register bit definitions
+
+#define USART_CR3_DMAR_Pos            (6U)
+#define USART_CR3_DMAR_Msk            (0x1UL << USART_CR3_DMAR_Pos)            /*!< 0x00000040 */
+#define USART_CR3_DMAR                USART_CR3_DMAR_Msk                       /*!< DMA Enable Receiver */
+#define USART_CR3_DMAT_Pos            (7U)
+#define USART_CR3_DMAT_Msk            (0x1UL << USART_CR3_DMAT_Pos)            /*!< 0x00000080 */
+#define USART_CR3_DMAT                USART_CR3_DMAT_Msk  
+
+#define USART_CR3_DDRE_Pos            (13U)
+#define USART_CR3_DDRE_Msk            (0x1UL << USART_CR3_DDRE_Pos)            /*!< 0x00002000 */
+#define USART_CR3_DDRE                USART_CR3_DDRE_Msk  
+
 // BRR register bit definitions
 #define USART_BRR_DIV_FRACTION_Pos    (0U)
 #define USART_BRR_DIV_FRACTION_Msk    (0xFUL << USART_BRR_DIV_FRACTION_Pos)    /*!< 0x0000000F */

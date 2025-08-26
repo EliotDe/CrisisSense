@@ -10,7 +10,7 @@
 #define USART_DIV_MAX_VALUE 0xFFFFU
 
 static uint8_t usart_config_baudrate(USART_TypeDef* usart_line, const usart_baud_config_t* baud_cfg, usart_err_t* error);
-static uint8_t usart_config_dma(const USART_TypeDef* usart_line, usart_err_t* error);
+static uint8_t usart_config_dma(USART_TypeDef* usart_line, usart_dma_t dma, usart_dma_ddre_t dma_ddre, usart_err_t* error);
 
 /*====================CONFIGURATION CODE====================*/
 
@@ -39,7 +39,8 @@ uint8_t usart_config_line(usart_config_t* cfg, usart_err_t* error){
     if (cfg->stop_bits > USART_STOP_1_HALF || 
         cfg->parity > USART_PARITY_ODD ||
         cfg->word_length > USART_WORD_LENGTH_7 || 
-        cfg-> auto_baud > USART_AUTOBAUD_55_FRAME) {
+        cfg-> auto_baud > USART_AUTOBAUD_55_FRAME ||
+        cfg->dma > USART_DMA_RX_TX) {
         if (error) *error = USART_ERR_INVALID_PARAM;
         return 0;
     }
@@ -113,10 +114,18 @@ uint8_t usart_config_line(usart_config_t* cfg, usart_err_t* error){
 
     // Configure DMA 
     usart_err_t dma_error = USART_OK;
-    if (!usart_config_dma(cfg->usart_line, &dma_error)){
-        if (error) *error = dma_error;
-        return 0;
+    if (cfg->dma != USART_DMA_NONE){ // If DMA is configured
+        if (!usart_config_dma(cfg->usart_line, cfg->dma, cfg->dma_ddre, &dma_error)){
+            if (error) *error = dma_error;
+            return 0;
+        }
     }
+    else{
+        uint32_t cr3 = cfg->usart_line->CR3;
+        usart_register_clear_bit(&cr3, (USART_CR3_DMAR | USART_CR3_DMAT));
+        cfg->usart_line->CR3 = cr3;
+    }
+    
 
     /*============ WRITE =============*/
 
@@ -143,7 +152,7 @@ static uint8_t usart_config_baudrate(USART_TypeDef* usart_line, const usart_baud
         return 0;
     }
 
-    uint32_t factor = baud_cfg->oversampling ? 2U : 1U;  // USART_OVER8 = 1, USART_OVER16 = 0
+    uint32_t factor = (baud_cfg->oversampling == USART_OVER8) ? 2U : 1U;  // USART_OVER8 = 1, USART_OVER16 = 0
     uint64_t usart_div = ((uint64_t)(factor * baud_cfg->f_clk)) / (uint64_t)baud_cfg->baud_rate;
 
     if(usart_div > USART_DIV_MAX_VALUE){
@@ -162,7 +171,7 @@ static uint8_t usart_config_baudrate(USART_TypeDef* usart_line, const usart_baud
     else{
         //OVER8 mode: BRR[2:0] = USARTDIV[3:0] >> 1, BRR[15:4] = USARTDIV[15:4]
         uint32_t brr = ((uint32_t)usart_div & USART_BRR_DIV_MANTISSA_Msk) | // Keep bits 15:4
-                       (((uint32_t)usart_div & USART_BRR_DIV_FRACTION_Msk) >> 1); // Shift bits 3:0 right by 1  
+                       (((uint32_t)usart_div & USART_BRR_DIV_FRACTION_Msk) >> 1); // Shift bits 3:0 right by 1 when in over8 mode as per the reference manual 
         
         usart_line->BRR = brr;
     }
@@ -170,14 +179,33 @@ static uint8_t usart_config_baudrate(USART_TypeDef* usart_line, const usart_baud
     return 1;
 }
 
-// usart_line pointer is const to pass static analysis check in ci/cd when pushing  - this will change
-static uint8_t usart_config_dma(const USART_TypeDef* usart_line, usart_err_t* error){
+/**
+ * @brief Configures the dma bits in the relevant USART register (CR3)
+ * @param usart_line USART peripheral to configure DMA on
+ * @param dma DMA settings - USART_DMA_RX (dma received bytes), USART_DMA_TX (dma transmitted bytes), USART_DMARX_TX (both)
+ * @param dma_ddre DMA Disable on Reception Error
+ * 
+ * @retval 0 - An Error Occured 1 - Otherwise
+ */
+static uint8_t usart_config_dma(USART_TypeDef* usart_line, usart_dma_t dma, usart_dma_ddre_t dma_ddre, usart_err_t* error){
     if (!usart_line){
         if (error) *error = USART_ERR_INVALID_PARAM;
         return 0;
     }
 
-    // placeholder
+    uint32_t cr3 = usart_line->CR3;
 
+    usart_register_clear_bit(&cr3, (USART_CR3_DMAR | USART_CR3_DMAT)); // clear dma bits first
+    usart_register_set_bit(&cr3, dma);
+    
+    if (dma_ddre == USART_DMA_NOT_DISABLED_ON_ERROR){
+        usart_register_clear_bit(&cr3, USART_CR3_DDRE);
+    }
+    else{
+        usart_register_set_bit(&cr3, USART_CR3_DDRE);
+    }
+
+    usart_line->CR3 = cr3;
+    
     return 1;
 }

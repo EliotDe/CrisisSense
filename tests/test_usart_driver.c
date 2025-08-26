@@ -123,6 +123,70 @@ void test_baud_rate_usartdiv_too_small_returns_error(void) {
     TEST_ASSERT_EQUAL(USART_ERR_INVALID_PARAM, error);
 }
 
+/*============== DMA CONFIGURATION TESTS ==============*/
+
+void test_dma_none_clears_dmar_and_dmat_bits(void) {
+    usart_err_t error = USART_OK;
+    mock_usart1.CR3 = USART_CR3_DMAR | USART_CR3_DMAT;  // start with both set
+    test_config.dma = USART_DMA_NONE;
+
+    usart_config_line(&test_config, &error);
+
+    TEST_ASSERT_FALSE(mock_usart1.CR3 & (USART_CR3_DMAR | USART_CR3_DMAT));
+}
+
+void test_dma_rx_sets_dmar_bit(void) {
+    usart_err_t error = USART_OK;
+    test_config.dma = USART_DMA_RX;
+
+    usart_config_line(&test_config, &error);
+
+    TEST_ASSERT_TRUE(mock_usart1.CR3 & USART_CR3_DMAR);
+    TEST_ASSERT_FALSE(mock_usart1.CR3 & USART_CR3_DMAT);
+}
+
+void test_dma_tx_sets_dmat_bit(void) {
+    usart_err_t error = USART_OK;
+    test_config.dma = USART_DMA_TX;
+
+    usart_config_line(&test_config, &error);
+
+    TEST_ASSERT_TRUE(mock_usart1.CR3 & USART_CR3_DMAT);
+    TEST_ASSERT_FALSE(mock_usart1.CR3 & USART_CR3_DMAR);
+}
+
+void test_dma_rx_tx_sets_both_bits(void) {
+    usart_err_t error = USART_OK;
+    test_config.dma = USART_DMA_RX_TX;
+
+    usart_config_line(&test_config, &error);
+
+    TEST_ASSERT_TRUE(mock_usart1.CR3 & USART_CR3_DMAR);
+    TEST_ASSERT_TRUE(mock_usart1.CR3 & USART_CR3_DMAT);
+}
+
+void test_dma_ddre_disabled_sets_ddre_bit(void) {
+    usart_err_t error = USART_OK;
+    test_config.dma = USART_DMA_RX_TX;
+    test_config.dma_ddre = USART_DMA_DISABLED_ON_ERROR;
+
+    usart_config_line(&test_config, &error);
+
+    TEST_ASSERT_TRUE(mock_usart1.CR3 & USART_CR3_DDRE);
+}
+
+void test_dma_ddre_not_disabled_clears_ddre_bit(void) {
+    usart_err_t error = USART_OK;
+    test_config.dma = USART_DMA_RX_TX;
+    test_config.dma_ddre = USART_DMA_NOT_DISABLED_ON_ERROR;
+    mock_usart1.CR3 = USART_CR3_DDRE;  // start with it set
+
+    usart_config_line(&test_config, &error);
+
+    TEST_ASSERT_FALSE(mock_usart1.CR3 & USART_CR3_DDRE);
+}
+
+
 /*============ REGISTER CONFIGURATION TESTS ============*/
 
 void test_oversampling_over16_clears_over8_bit(void){
@@ -205,6 +269,26 @@ void test_parity_odd_sets_both_pce_and_ps(void) {
     TEST_ASSERT_TRUE(mock_usart1.CR1 & USART_CR1_PS);
 }
 
+void test_stop_bits_1_sets_correct_field(void) {
+    usart_err_t error = USART_OK;
+    test_config.stop_bits = USART_STOP_1;
+
+    usart_config_line(&test_config, &error);
+
+    TEST_ASSERT_EQUAL(USART_STOP_1 << USART_CR2_STOP_Pos,
+                      mock_usart1.CR2 & USART_CR2_STOP_Msk);
+}
+
+void test_stop_bits_2_sets_correct_field(void) {
+    usart_err_t error = USART_OK;
+    test_config.stop_bits = USART_STOP_2;
+
+    usart_config_line(&test_config, &error);
+
+    TEST_ASSERT_EQUAL(USART_STOP_2 << USART_CR2_STOP_Pos,
+                      mock_usart1.CR2 & USART_CR2_STOP_Msk);
+}
+
 
 /*============ AUTO-BAUD TESTS ============*/
 
@@ -237,6 +321,27 @@ void test_auto_baud_7f_frame_sets_correct_mode(void) {
     TEST_ASSERT_EQUAL(USART_CR2_ABRMODE_1, mock_usart1.CR2 & USART_CR2_ABRMODE_Msk);
 }
 
+void test_auto_baud_falling_edge_sets_correct_mode(void) {
+    usart_err_t error = USART_OK;
+    test_config.auto_baud = USART_AUTOBAUD_FALLING_EDGE;
+
+    usart_config_line(&test_config, &error);
+
+    TEST_ASSERT_TRUE(mock_usart1.CR2 & USART_CR2_ABREN);
+    TEST_ASSERT_EQUAL(USART_CR2_ABRMODE_0, mock_usart1.CR2 & USART_CR2_ABRMODE_Msk);
+}
+
+void test_auto_baud_55_frame_sets_correct_mode(void) {
+    usart_err_t error = USART_OK;
+    test_config.auto_baud = USART_AUTOBAUD_55_FRAME;
+
+    usart_config_line(&test_config, &error);
+
+    TEST_ASSERT_TRUE(mock_usart1.CR2 & USART_CR2_ABREN);
+    TEST_ASSERT_EQUAL(USART_CR2_ABRMODE_Msk, mock_usart1.CR2 & USART_CR2_ABRMODE_Msk);
+}
+
+
 /*============ "INTEGRATION TESTS" ============*/
 
 void test_successful_configuration_enables_usart(void){
@@ -247,6 +352,18 @@ void test_successful_configuration_enables_usart(void){
     TEST_ASSERT_EQUAL(1, result);
     TEST_ASSERT_EQUAL(USART_OK, error);
     TEST_ASSERT_TRUE(mock_usart1.CR1 & USART_CR1_UE);
+}
+
+void test_invalid_config_does_not_write_registers(void) {
+    usart_err_t error;
+    mock_usart1.CR1 = 0x12345678; // sentinel
+    test_config.baud_rate = 0;    // invalid
+
+    uint8_t result = usart_config_line(&test_config, &error);
+
+    TEST_ASSERT_EQUAL(0, result);
+    TEST_ASSERT_EQUAL(USART_ERR_INVALID_PARAM, error);
+    TEST_ASSERT_EQUAL_HEX32(0x12345678, mock_usart1.CR1); // unchanged
 }
 
 /*============ TEST RUNNER ============*/
@@ -265,6 +382,14 @@ int main(void){
     RUN_TEST(test_baud_rate_usartdiv_too_large_returns_overflow);
     RUN_TEST(test_baud_rate_usartdiv_too_small_returns_error);
     
+    // DMA configuration tests
+    RUN_TEST(test_dma_none_clears_dmar_and_dmat_bits);
+    RUN_TEST(test_dma_tx_sets_dmat_bit);
+    RUN_TEST(test_dma_rx_sets_dmar_bit);
+    RUN_TEST(test_dma_rx_tx_sets_both_bits);
+    RUN_TEST(test_dma_ddre_not_disabled_clears_ddre_bit);
+    RUN_TEST(test_dma_ddre_disabled_sets_ddre_bit);
+
     // Register configuration tests
     RUN_TEST(test_oversampling_over16_clears_over8_bit);
     RUN_TEST(test_oversampling_over8_sets_over8_bit);
@@ -274,14 +399,19 @@ int main(void){
     RUN_TEST(test_parity_none_clears_pce_bit);
     RUN_TEST(test_parity_even_sets_pce_clears_ps);
     RUN_TEST(test_parity_odd_sets_both_pce_and_ps);
+    RUN_TEST(test_stop_bits_1_sets_correct_field);
+    RUN_TEST(test_stop_bits_2_sets_correct_field);
     
     // Auto baud tests
     RUN_TEST(test_auto_baud_disabled_does_not_set_abren);
     RUN_TEST(test_auto_baud_start_bit_enables_abren_with_mode_00);
     RUN_TEST(test_auto_baud_7f_frame_sets_correct_mode);
+    RUN_TEST(test_auto_baud_55_frame_sets_correct_mode);
+    RUN_TEST(test_auto_baud_falling_edge_sets_correct_mode);
     
     // Integration tests
     RUN_TEST(test_successful_configuration_enables_usart);
+    RUN_TEST(test_invalid_config_does_not_write_registers);
 
     return UNITY_END();
 }

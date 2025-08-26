@@ -46,9 +46,16 @@ typedef enum{
 
 typedef enum{
     USART_DMA_NONE, 
-    USART_DMA_RX,   // Use DMA on received data
-    USART_DMA_TX    // Use DMA on transmitted data
+    USART_DMA_RX = USART_CR3_DMAR,   // Use DMA on received data
+    USART_DMA_TX = USART_CR3_DMAT,    // Use DMA on transmitted data
+    USART_DMA_RX_TX = (USART_CR3_DMAR | USART_CR3_DMAT)
 }usart_dma_t;
+
+// DMA Disable on Recetpion Error
+typedef enum{
+    USART_DMA_NOT_DISABLED_ON_ERROR,
+    USART_DMA_DISABLED_ON_ERROR
+}usart_dma_ddre_t;
 
 typedef enum{
     USART_AUTOBAUD_DISABLED,
@@ -73,6 +80,8 @@ typedef struct{
     usart_oversampling_t oversampling;
     usart_word_length_t word_length;
     usart_stop_bits_t stop_bits;
+    usart_dma_t dma;
+    usart_dma_ddre_t dma_ddre;
 } usart_config_t;
 
 /*=============CONFIGURATION FUNCTIONS=============*/
