@@ -1,5 +1,10 @@
+#ifdef UNIT_TEST
+    #include "tests\mock_stm32l432xx.h"
+#else
+    #include "stm32l432xx.h"
+#endif 
+
 #include "usart_driver.h"
-#include "stm32l432xx.h"
 
 #define USART_DIV_MIN_VALUE 16
 #define USART_DIV_MAX_VALUE 0xFFFFU

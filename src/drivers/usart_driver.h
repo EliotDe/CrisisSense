@@ -1,7 +1,11 @@
 #ifndef USART_DRIVER_H
 #define USART_DRIVER_H
 
-#include "stm32l432xx.h"
+#ifdef UNIT_TEST
+    #include "tests\mock_stm32l432xx.h"
+#else
+    #include "stm32l432xx.h"
+#endif //UNIT_TEST
 
 // Error Codes
 typedef enum{
@@ -82,4 +86,4 @@ static inline void usart_register_clear_bit(uint32_t* reg, uint32_t bit){*reg &=
 
 
 
-#endif
+#endif //USART_DRIVER_H

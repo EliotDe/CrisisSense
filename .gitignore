@@ -21,6 +21,10 @@ build/
 !.vscode/tasks.json
 !.vscode/launch.json
 
+# Unity
+unity/
+unity/*
+
 # OS junk
 .DS_Store
 Thumbs.db
@@ -30,4 +34,4 @@ Thumbs.db
 
 # Temporary / backup files
 *~
-*.swp
+*.sw
