@@ -5,6 +5,7 @@
 #endif 
 
 #include "usart_driver.h"
+#include <stddef.h>
 
 #define USART_DIV_MIN_VALUE 16
 #define USART_DIV_MAX_VALUE 0xFFFFU
@@ -12,7 +13,9 @@
 static uint8_t usart_config_baudrate(USART_TypeDef* usart_line, const usart_baud_config_t* baud_cfg, usart_err_t* error);
 static uint8_t usart_config_dma(USART_TypeDef* usart_line, usart_dma_t dma, usart_dma_ddre_t dma_ddre, usart_err_t* error);
 
-/*====================CONFIGURATION CODE====================*/
+static uint8_t usart_puts(USART_TypeDef* usart_line, const uint16_t* buffer, size_t buffer_size, usart_word_length_t word_length, usart_err_t* error);
+static uint8_t usart_putc(USART_TypeDef* usart_line, const uint16_t c, usart_word_length_t word_length, usart_err_t* error);
+/*==========================CONFIGURATION CODE==========================*/
 
 /**
  * @brief Configures a given USART peripheral
@@ -21,6 +24,7 @@ static uint8_t usart_config_dma(USART_TypeDef* usart_line, usart_dma_t dma, usar
  * @retval 0 - An error has occured 1 - otherwise 
  * 
  * @note If configuring for continuous communication with DMA - the DMA peripheral should be configured separately
+ * @todo Triple-Check Safety
  */
 uint8_t usart_config_line(usart_config_t* cfg, usart_err_t* error){
     /*============ VALIDATION ============*/
@@ -197,7 +201,7 @@ static uint8_t usart_config_dma(USART_TypeDef* usart_line, usart_dma_t dma, usar
 
     usart_register_clear_bit(&cr3, (USART_CR3_DMAR | USART_CR3_DMAT)); // clear dma bits first
     usart_register_set_bit(&cr3, dma);
-    
+
     if (dma_ddre == USART_DMA_NOT_DISABLED_ON_ERROR){
         usart_register_clear_bit(&cr3, USART_CR3_DDRE);
     }
@@ -207,5 +211,96 @@ static uint8_t usart_config_dma(USART_TypeDef* usart_line, usart_dma_t dma, usar
 
     usart_line->CR3 = cr3;
     
+    return 1;
+}
+
+/*============ TRANSMITTER CODE ============*/
+
+/**
+ * @brief This function starts USART transmission.
+ * @param usart_line The USART Peripheral to start transmission on.
+ * 
+ * @retval 0 - An Error Occured 1 - Transmission Started OK
+ * @note If transmitting with DMA, this function just enables transmission TE - You need to wait for TC after calling this.
+ */
+uint8_t usart_transmit(USART_TypeDef* usart_line, const usart_dataPacket_t* data_packet, usart_err_t* error){
+    // placeholder
+    if (!usart_line || !data_packet){
+        if(error) *error = USART_ERR_INVALID_PARAM;
+        return 0;
+    }
+
+    if(usart_line->CR1 & USART_CR1_TE){ // Check if transmitter is already enabled
+        if(error) *error = USART_ERR_BUSY;
+        return 0;
+    }
+
+    usart_line->CR1 |= USART_CR1_TE;
+
+
+    // Send Data
+    usart_err_t puts_error = USART_OK;
+    if(data_packet->mode == USART_MODE_POLLING){
+        uint8_t puts_retval = usart_puts(usart_line, data_packet->buffer, data_packet->length, data_packet->word_length, &puts_error);
+        if(!puts_retval){
+            *error = puts_error;
+            return 0;
+        }
+    }
+    
+    return 1;
+}
+
+/**
+ * @note I can't imagine this accounts for different word lengths
+ */
+static uint8_t usart_putc(USART_TypeDef* usart_line, const uint16_t c, usart_word_length_t word_length, usart_err_t* error){
+    if(!usart_line){
+        if(error) *error = USART_ERR_INVALID_PARAM;
+        return 0;
+    }
+    
+    while(!(usart_line->ISR & USART_ISR_TXE));
+
+    static const uint16_t word_length_max[] = {
+        0xFF,   // USART_WORD_LENGTH_8
+        0x1FF,  // USART_WORD_LENGTH_9
+        0X7F    // USART_WORD_LENGTH_7
+    };
+
+    if (c > word_length_max[word_length]){
+        if (error) *error = USART_ERR_OVERFLOW;
+        return 0;
+    }
+
+    usart_line->TDR = c;
+    return 1;
+}
+
+/**
+ * @note I can't imagine this accounts for different word lengths
+ * @note Blocking
+ */
+static uint8_t usart_puts(USART_TypeDef* usart_line, const uint16_t* buffer, size_t length, usart_word_length_t word_length, usart_err_t* error){
+    // word_length > USART_WORD_LENGTH_7 seems contradictory because 7 is the smallest word length - maybe change this
+    if(!buffer || !length || word_length > USART_WORD_LENGTH_7){
+        if(error) *error = USART_ERR_INVALID_PARAM;
+        while(!(usart_line->ISR & USART_ISR_TC));
+        return 0;
+    }
+
+    size_t chars_transmitted = 0;
+    usart_err_t putc_error = USART_OK;
+    while (chars_transmitted != length){
+        uint8_t putc_retval = usart_putc(usart_line, buffer[chars_transmitted++], word_length, &putc_error);
+        if(!putc_retval){
+            if (error) *error = putc_error;
+            while(!(usart_line->ISR & USART_ISR_TC));
+            return 0;
+        }
+    }
+
+    while(!(usart_line->ISR & USART_ISR_TC));
+
     return 1;
 }

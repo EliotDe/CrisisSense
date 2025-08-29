@@ -7,6 +7,8 @@
     #include "stm32l432xx.h"
 #endif //UNIT_TEST
 
+#include <stddef.h>
+
 // Error Codes
 typedef enum{
     USART_OK = 0,
@@ -15,6 +17,12 @@ typedef enum{
     USART_ERR_OVERFLOW = -3
 
 } usart_err_t;
+
+typedef enum{
+    USART_MODE_POLLING,
+    USART_MODE_INTERRUPTS,
+    USART_MODE_DMA
+} usart_mode_t;
 
 // Parity Setting
 typedef enum{
@@ -72,6 +80,13 @@ typedef struct{
 } usart_baud_config_t;
 
 typedef struct{
+    uint16_t* buffer;
+    size_t length;
+    usart_word_length_t word_length;
+    usart_mode_t mode;
+} usart_dataPacket_t;
+
+typedef struct{
     USART_TypeDef* usart_line;
     usart_parity_t parity;
     usart_autobaud_t auto_baud;
@@ -87,6 +102,7 @@ typedef struct{
 /*=============CONFIGURATION FUNCTIONS=============*/
 
 uint8_t usart_config_line(usart_config_t* cfg, usart_err_t* error);
+uint8_t usart_transmit(USART_TypeDef* usart_line, const usart_dataPacket_t* data_packet, usart_err_t* error);
 
 /*==============CONFIGURATION HELPERS==============*/
 

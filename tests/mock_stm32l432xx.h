@@ -48,6 +48,10 @@ typedef struct {
 #define USART_CR1_PS_Msk              (0x1UL << USART_CR1_PS_Pos)              /*!< 0x00000200 */
 #define USART_CR1_PS                  USART_CR1_PS_Msk       
 
+#define USART_CR1_TE_Pos              (3U)
+#define USART_CR1_TE_Msk              (0x1UL << USART_CR1_TE_Pos)              /*!< 0x00000008 */
+#define USART_CR1_TE                  USART_CR1_TE_Msk  
+
 // CR2 register bit definitions
 #define USART_CR2_STOP_Pos            (12U)
 #define USART_CR2_STOP_Msk            (0x3UL << USART_CR2_STOP_Pos)            /*!< 0x00003000 */
@@ -84,6 +88,14 @@ typedef struct {
 #define USART_BRR_DIV_FRACTION        USART_BRR_DIV_FRACTION_Msk               /*!< Fraction of USARTDIV */
 #define USART_BRR_DIV_MANTISSA_Pos    (4U)
 #define USART_BRR_DIV_MANTISSA_Msk    (0xFFFUL << USART_BRR_DIV_MANTISSA_Pos)  /*!< 0x0000FFF0 */
-#define USART_BRR_DIV_MANTISSA        USART_BRR_DIV_MANTISSA_Msk  
+#define USART_BRR_DIV_MANTISSA        USART_BRR_DIV_MANTISSA_Msk 
+
+// ISR register bit definitions
+#define USART_ISR_TC_Pos              (6U)
+#define USART_ISR_TC_Msk              (0x1UL << USART_ISR_TC_Pos)              /*!< 0x00000040 */
+#define USART_ISR_TC                  USART_ISR_TC_Msk                         /*!< Transmission Complete */
+#define USART_ISR_TXE_Pos             (7U)
+#define USART_ISR_TXE_Msk             (0x1UL << USART_ISR_TXE_Pos)             /*!< 0x00000080 */
+#define USART_ISR_TXE                 USART_ISR_TXE_Msk 
 
 #endif // MOCK_STM32L432XX_H
