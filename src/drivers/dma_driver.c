@@ -3,27 +3,37 @@
 
 /*************  DMA CONFIGURATION CODE *************/
 
-uint8_t dma_config_channel(DMA_TypeDef* dma_line, dma_channel_config_t* cfg, dma_err_t* error){
-    if(!dma_line || !cfg->dma_channel){
+uint8_t dma_config_channel(dma_channel_config_t* cfg, dma_err_t* error){
+    if(!cfg->dma_channel){
         if(error) *error = DMA_ERR_INVALID_PARAM;
         return 0;
     }
     if (cfg->channel_priority > DMA_PRIORITY_VERY_HIGH ||
+        cfg->mem_increment_mode > DMA_MEMORY_INCREMENT_ENABLED ||
+        cfg->periph_increment_mode > DMA_PERIPH_INCREMENT_ENABLED ||
+        cfg->transfer_direction > DMA_READ_FROM_MEMORY ||
         cfg->mem_size > DMA_MSIZE_32 || 
         cfg->periph_size > DMA_PSIZE_32 ||
-        cfg->circular_mode > DMA_CIRCULAR_ENABLED ||
-        cfg->interrupts > (DMA_INT_HALF_TRANSFER | DMA_INT_TRANSFER_COMPLETE | DMA_INT_TRANSFER_ERROR)){
+        cfg->circular_mode > DMA_CIRCULAR_ENABLED){
         if (error) *error = DMA_ERR_INVALID_PARAM;
         return 0;
     }
+
+    const uint32_t IRQ_ALLOWED = (DMA_CCR_HTIE | DMA_CCR_TCIE | DMA_CCR_TEIE);
+
+    if(cfg->interrupts & ~IRQ_ALLOWED){
+        if(error) *error = DMA_ERR_INVALID_PARAM;
+        return 0;
+    }
+
     if(cfg->dma_channel->CCR & DMA_CCR_EN){
         if(error) *error = DMA_ERR_BUSY;
         return 0;
     }
 
     // set peripheral and memory address
-    cfg->dma_channel->CPAR = cfg->periph_address;
-    cfg->dma_channel->CMAR = cfg->memory_address;
+    cfg->dma_channel->CPAR = (uint32_t)cfg->periph_address;
+    cfg->dma_channel->CMAR = (uint32_t)cfg->memory_address;
 
     cfg->dma_channel->CNDTR = cfg->data_size;
 
@@ -50,20 +60,38 @@ uint8_t dma_config_channel(DMA_TypeDef* dma_line, dma_channel_config_t* cfg, dma
     dma_register_clear_bit(&ccr, DMA_CCR_MSIZE); // sets MSIZE[1:0] bits to 00 (DMA_MSIZE_8)
     if (cfg->mem_size == DMA_MSIZE_16)
         dma_register_set_bit(&ccr, DMA_CCR_MSIZE_0); // MSIZE[1:0] = 01
-    else
+    else if (cfg->mem_size == DMA_MSIZE_32)
         dma_register_set_bit(&ccr, DMA_CCR_MSIZE_1); // MSIZE[1:0] = 10
 
     // Configure PSIZE
-    dma_register_set_bit(&ccr, DMA_CCR_PSIZE); // sets PSIZE[1:0] to 00
+    dma_register_clear_bit(&ccr, DMA_CCR_PSIZE); // sets PSIZE[1:0] to 00
     if(cfg->periph_size == DMA_PSIZE_16)
         dma_register_set_bit(&ccr, DMA_CCR_PSIZE_0); // PSIZE[1:0] = 01
-    else
+    else if (cfg->periph_size == DMA_PSIZE_32)
         dma_register_set_bit(&ccr, DMA_CCR_PSIZE_1); // PSIZE[1:0] = 10
 
-    // Configure incremented mode  &  data transfer direction
+
+    // Configure memory incremented mode
+    if(cfg->mem_increment_mode == DMA_MEMORY_INCREMENT_DISABLED)
+        dma_register_clear_bit(&ccr, DMA_CCR_MINC);
+    else
+        dma_register_set_bit(&ccr, DMA_CCR_MINC);
+
+    // Configure peripheral incremented mode
+    if(cfg->periph_increment_mode == DMA_PERIPH_INCREMENT_DISABLED)
+        dma_register_clear_bit(&ccr, DMA_CCR_PINC);
+    else 
+        dma_register_set_bit(&ccr, DMA_CCR_PINC);
+
+    // Configure Transfer Direction
+    if(cfg->transfer_direction == DMA_READ_FROM_PERIPHERAL)
+        dma_register_clear_bit(&ccr, DMA_CCR_DIR);
+    else
+        dma_register_set_bit(&ccr, DMA_CCR_DIR);
     
     // Configure Interrupts
-    dma_register_set_bit(&ccr, cfg->interrupts);
+    dma_register_clear_bit(&ccr, IRQ_ALLOWED);
+    dma_register_set_bit(&ccr, cfg->interrupts & IRQ_ALLOWED);
 
     // set circular mode
     if (cfg->circular_mode == DMA_CIRCULAR_DISABLED)
