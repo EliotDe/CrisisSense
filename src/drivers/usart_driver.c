@@ -287,7 +287,6 @@ static uint8_t usart_puts(USART_TypeDef* usart_line, const void* buffer, size_t 
     }
 
 
-    size_t chars_transmitted = 0;
     usart_err_t putc_error = USART_OK;
     if(word_length == USART_WORD_LENGTH_9){
         const uint16_t* data = (const uint16_t*)buffer;
