@@ -80,7 +80,7 @@ typedef struct{
 } usart_baud_config_t;
 
 typedef struct{
-    uint16_t* buffer;
+    const void* buffer;
     size_t length;
     usart_word_length_t word_length;
     usart_mode_t mode;

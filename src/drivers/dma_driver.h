@@ -5,6 +5,7 @@
 #include <stddef.h>
 
 typedef enum{
+    DMA_OK = 0,
     DMA_ERR_INVALID_PARAM = -1,
     DMA_ERR_BUSY = -2,
 }dma_err_t;
@@ -70,8 +71,8 @@ typedef enum{
 
 typedef struct{
     DMA_Channel_TypeDef* dma_channel;
-    uint32_t* periph_address;
-    uint32_t* memory_address;
+    const void* periph_address;
+    const void* memory_address;
     dma_memory_increment_mode_t mem_increment_mode;
     dma_peripheral_increment_mode_t periph_increment_mode;
     dma_transfer_direction_t transfer_direction;

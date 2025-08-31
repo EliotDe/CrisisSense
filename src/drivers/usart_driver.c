@@ -13,7 +13,7 @@
 static uint8_t usart_config_baudrate(USART_TypeDef* usart_line, const usart_baud_config_t* baud_cfg, usart_err_t* error);
 static uint8_t usart_config_dma(USART_TypeDef* usart_line, usart_dma_t dma, usart_dma_ddre_t dma_ddre, usart_err_t* error);
 
-static uint8_t usart_puts(USART_TypeDef* usart_line, const uint16_t* buffer, size_t buffer_size, usart_word_length_t word_length, usart_err_t* error);
+static uint8_t usart_puts(USART_TypeDef* usart_line, const void* buffer, size_t buffer_size, usart_word_length_t word_length, usart_err_t* error);
 static uint8_t usart_putc(USART_TypeDef* usart_line, const uint16_t c, usart_word_length_t word_length, usart_err_t* error);
 /*==========================CONFIGURATION CODE==========================*/
 
@@ -235,19 +235,16 @@ uint8_t usart_transmit(USART_TypeDef* usart_line, const usart_dataPacket_t* data
         return 0;
     }
 
-    usart_line->CR1 |= USART_CR1_TE;
-
-
     // Send Data
-    usart_err_t puts_error = USART_OK;
     if(data_packet->mode == USART_MODE_POLLING){
+        usart_err_t puts_error = USART_OK;
         uint8_t puts_retval = usart_puts(usart_line, data_packet->buffer, data_packet->length, data_packet->word_length, &puts_error);
         if(!puts_retval){
             *error = puts_error;
             return 0;
         }
     }
-    
+
     return 1;
 }
 
@@ -281,24 +278,40 @@ static uint8_t usart_putc(USART_TypeDef* usart_line, const uint16_t c, usart_wor
  * @note I can't imagine this accounts for different word lengths
  * @note Blocking
  */
-static uint8_t usart_puts(USART_TypeDef* usart_line, const uint16_t* buffer, size_t length, usart_word_length_t word_length, usart_err_t* error){
+static uint8_t usart_puts(USART_TypeDef* usart_line, const void* buffer, size_t length, usart_word_length_t word_length, usart_err_t* error){
     // word_length > USART_WORD_LENGTH_7 seems contradictory because 7 is the smallest word length - maybe change this
-    if(!buffer || !length || word_length > USART_WORD_LENGTH_7){
+    if(!usart_line || !buffer || !length || word_length > USART_WORD_LENGTH_7){
         if(error) *error = USART_ERR_INVALID_PARAM;
         while(!(usart_line->ISR & USART_ISR_TC));
         return 0;
     }
 
+
     size_t chars_transmitted = 0;
     usart_err_t putc_error = USART_OK;
-    while (chars_transmitted != length){
-        uint8_t putc_retval = usart_putc(usart_line, buffer[chars_transmitted++], word_length, &putc_error);
-        if(!putc_retval){
-            if (error) *error = putc_error;
-            while(!(usart_line->ISR & USART_ISR_TC));
-            return 0;
+    if(word_length == USART_WORD_LENGTH_9){
+        const uint16_t* data = (const uint16_t*)buffer;
+        for (size_t i = 0; i < length; i++){
+            uint8_t putc_retval = usart_putc(usart_line, data[i], word_length, &putc_error);
+            if(!putc_retval){
+                if (error) *error = putc_error;
+                while(!(usart_line->ISR & USART_ISR_TC));
+                return 0;
+            }
+        }
+    } else {
+        const uint8_t* data = (const uint8_t*)buffer;
+        for (size_t i = 0; i < length; i++){
+            uint8_t putc_retval = usart_putc(usart_line, (uint16_t)data[i], word_length, &putc_error);
+            if(!putc_retval){
+                if (error) *error = putc_error;
+                while(!(usart_line->ISR & USART_ISR_TC));
+                return 0;
+            }
         }
     }
+
+    
 
     while(!(usart_line->ISR & USART_ISR_TC));
 

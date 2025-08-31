@@ -4,7 +4,7 @@
 /*************  DMA CONFIGURATION CODE *************/
 
 uint8_t dma_config_channel(dma_channel_config_t* cfg, dma_err_t* error){
-    if(!cfg->dma_channel){
+    if(!cfg->dma_channel || !cfg->periph_address || !cfg->memory_address){
         if(error) *error = DMA_ERR_INVALID_PARAM;
         return 0;
     }
