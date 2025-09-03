@@ -41,7 +41,7 @@ uint8_t usart_config_line(usart_config_t* cfg, usart_err_t* error){
 
     // Range validation
     if (cfg->stop_bits > USART_STOP_1_HALF || 
-        cfg->parity > USART_PARITY_ODD ||
+        cfg->parity > USART_PARITY_ODD || 
         cfg->word_length > USART_WORD_LENGTH_7 || 
         cfg-> auto_baud > USART_AUTOBAUD_55_FRAME ||
         cfg->dma > USART_DMA_RX_TX) {

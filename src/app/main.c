@@ -1,15 +1,19 @@
 #include "stm32l432xx.h"
+#include "src\managers\debugging_manager.h"
 
 #define LED_PIN 3
 #define LED_PORT GPIOB 
 
 void main(){
-    /*//\\ //\\ //\\ //\\ //\\ //\\ //\\ //\\ //\\ //\\*/
-    /*\\// \\// \\// \\// \\// \\// \\// \\// \\// \\//*/
-    /*//\\ //\\  Theres nothing here yet //\\ //\\ //\\ -- there is now*/
-    /*\\// \\// \\// \\// \\// \\// \\// \\// \\// \\//*/
-    /*//\\ //\\ //\\ //\\ //\\ //\\ //\\ //\\ //\\ //\\*/
+  /*//\\ //\\ //\\ //\\ //\\ //\\ //\\ //\\ //\\ //\\*/
+  /*\\// \\// \\// \\// \\// \\// \\// \\// \\// \\//*/
+  /*//\\ //\\  Theres nothing here yet //\\ //\\ //\\ -- there is now*/
+  /*\\// \\// \\// \\// \\// \\// \\// \\// \\// \\//*/
+  /*//\\ //\\ //\\ //\\ //\\ //\\ //\\ //\\ //\\ //\\*/
+  char* msg = "hello world!";
+  uint8_t manager_retval = Manager_Debug_Polling(msg);
 
+  if(manager_retval == 0){
     /* configure clock for AHB1 bus */
     RCC -> AHB2ENR |= RCC_AHB2ENR_GPIOBEN;
 
@@ -25,8 +29,9 @@ void main(){
 
     /* prevent undefined behaviour after return from main */
     while(1){
-        LED_PORT -> ODR ^= (1 << LED_PIN);
+      LED_PORT -> ODR ^= (1 << LED_PIN);
 
-        for(volatile uint32_t i=0; i<100000; i++);
+      for(volatile uint32_t i=0; i<100000; i++);
     }
+  }
 }
