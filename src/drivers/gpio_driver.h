@@ -4,23 +4,37 @@
 // GPIO Error Codes
 typedef enum{
   GPIO_OK,
-  GPIO_ERR_INVALID_PARAM
+  GPIO_ERR_INVALID_PARAM,
 }gpio_error_t;
+
+#ifndef GPIO_MODER_Msk
+#define  GPIO_MODER_Msk  0x3U
+#endif
+
+#ifndef GPIO_OTYPER_Msk
+#define  GPIO_OTYPER_Msk  0x1U
+#endif
+
+#ifndef GPIO_OSPEEDR_Msk
+#define  GPIO_OSPEEDR_Msk  0x3U
+#endif
+
+#ifndef GPIO_PUPDR_Msk
+#define  GPIO_PUPDR_Msk  0x3U 
+#endif
 
 // GPIO Mode Register Values
 typedef enum{
   GPIO_MODER_INPUT,
   GPIO_MODER_OUTPUT,
   GPIO_MODER_AF,
-  GPIO_MODER_ANALOG,
-  GPIO_MODER_Msk = 0x3U
+  GPIO_MODER_ANALOG
 }gpio_moder_t;
 
 // GPIO Output Type Register Values
 typedef enum{
   GPIO_OTYPER_PUSH_PULL,
-  GPIO_OTYPER_OPEN_DRAIN,
-  GPIO_OTYPER_Msk = 0x1U
+  GPIO_OTYPER_OPEN_DRAIN
 }gpio_otyper_t;
 
 // GPIO Output Speed Register Values
@@ -35,8 +49,7 @@ typedef enum{
 typedef enum{
   GPIO_PUPDR_NONE,
   GPIO_PUPDR_PULL_UP,
-  GPIO_PUPDR_PULL_DOWN,
-  GPIO_PUPDR_Msk = 0x3U // Don't program the Mask as the value - 11 is reserved
+  GPIO_PUPDR_PULL_DOWN
 }gpio_pupdr_t;
 
 

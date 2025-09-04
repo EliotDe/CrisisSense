@@ -6,11 +6,11 @@
 #define HSE_CLK_HZ  8000000U
 #endif 
 
-#ifndef BOARD_HAS_HSE
-#define BOARD_HAS_HSE 1       // set to 0 if there is none
-#endif 
+// #ifndef BOARD_HAS_HSE
+// #define BOARD_HAS_HSE 1       // set to 0 if there is none
+// #endif 
 
-#define HSI16_CLK_HZ 16000000 //this is the typical value, could be between 15.88MHz and 16.08MHz
+#define HSI16_CLK_HZ 16000000U //this is the typical value, could be between 15.88MHz and 16.08MHz
 
 
 #define AHB_PRESCALER_Msk 0x7U
@@ -36,7 +36,7 @@ static const uint32_t msi_frequency_table[] = {
 /**
  * @brief Return the frequency of the HSE external oscillator, if present on the board and ready
  */
-static size_t rcc_get_hse_hz(){
+static uint32_t rcc_get_hse_hz(rcc_err_t* error){
   #ifdef HSE_CLK_HZ
     // Return HSE frequency if the oscillator is ready
     if(RCC->CR & RCC_CR_HSERDY)
@@ -44,12 +44,15 @@ static size_t rcc_get_hse_hz(){
   
   #endif
 
+  if(error) *error = RCC_ERR_HSE_NOT_AVAILABLE;
   return 0; // HSE not present or not ready
 }
 
-static size_t rcc_get_msi_hz(){
-  if(!RCC->CR & RCC_CR_MSIRDY)
+static uint32_t rcc_get_msi_hz(rcc_err_t* error){
+  if(!(RCC->CR & RCC_CR_MSIRDY)){
+    if(error) *error = RCC_ERR_MSI_NOT_READY;
     return 0; // MSI not ready
+  }
 
   uint32_t msirange;
 
@@ -70,33 +73,94 @@ static size_t rcc_get_msi_hz(){
  * @brief Calculates the System Clock Frequency in Hertz (Hz)
  * @retval System Clock Frequency
  */
-size_t rcc_get_sysclk_hz(){
+uint32_t rcc_get_sysclk_hz(rcc_err_t* error){
   uint8_t sysclk_src = RCC->CFGR & RCC_CFGR_SWS;
 
-  if(sysclk_src == RCC_CFGR_SWS_HSE)
-    return rcc_get_hse_hz();
-  else if (sysclk_src == RCC_CFGR_SWS_HSI)
-    return HSI16_CLK_HZ;
-  else if (sysclk_src == RCC_CFGR_SWS_MSI)
-    return rcc_get_msi_hz();
-  else{ // If PLL is being used: Read PLLCFGR (PLL Configuration Register)
-    size_t pll_input_clk_hz;
-    switch(RCC->PLLCFGR & RCC_PLLCFGR_PLLSRC){
-      case RCC_PLLCFGR_PLLSRC_HSE: pll_input_clk_hz = rcc_get_hse_hz(); break;
-      case RCC_PLLCFGR_PLLSRC_HSI: pll_input_clk_hz = HSI16_CLK_HZ; break;
-      case RCC_PLLCFGR_PLLSRC_MSI: pll_input_clk_hz = rcc_get_msi_hz(); break;
-      default: return 0; // Invalid PLL Source
-    };
+  switch(sysclk_src){
+    case RCC_CFGR_SWS_HSE:{ // If the SYSCLK Source is configured as HSE
+      // Get HSE frequency
+      rcc_err_t hse_error = RCC_OK;
+      uint32_t get_hse_retval = rcc_get_hse_hz(&hse_error);
+      // If an error Occured Report it
+      if(!get_hse_retval){
+        if(error) *error = hse_error;
+        return 0;
+      }
+      return get_hse_retval;
+    }
+    case RCC_CFGR_SWS_HSI: { // If the SYSCLK Source is configured as HSI
+      // HSI should be 16MHz so just return that
+      return HSI16_CLK_HZ;
+    }
+    case RCC_CFGR_SWS_MSI: { // If the SYSCLK Source is configured as MSI
+      // Get MSI frequency
+      rcc_err_t msi_error = RCC_OK;
+      uint32_t get_msi_retval = rcc_get_msi_hz(&msi_error);
+      // If an error occured report it
+      if(!get_msi_retval){
+        if(error) *error = msi_error;
+        return 0;
+      }
+      return get_msi_retval;
+    }
+    case RCC_CFGR_SWS_PLL: { // If the SYSCLK Source is configured as PLL
+      size_t pll_input_clk_hz;
+      uint8_t pll_clk_src = RCC->PLLCFGR & RCC_PLLCFGR_PLLSRC;
+      switch(pll_clk_src){ 
+        case RCC_PLLCFGR_PLLSRC_HSE: { // If the PLL Source is configured as HSE
+          // Get HSE frequency
+          rcc_err_t hse_error = RCC_OK;
+          uint32_t get_hse_retval = rcc_get_hse_hz(&hse_error);
+          // If an error occured, report it
+          if(!get_hse_retval){
+            if(error) *error = hse_error;
+            return 0;
+          }
+          // Set the PLL input clock frequency to HSE clock frequency
+          pll_input_clk_hz = get_hse_retval;
+          break;
+        }
+        case RCC_PLLCFGR_PLLSRC_HSI: { // If the PLL Source is configured as HSI
+          // Set the PLL input clock frequency to HSI clock frequency
+          pll_input_clk_hz = HSI16_CLK_HZ; 
+          break;
+        }
+        case RCC_PLLCFGR_PLLSRC_MSI: { // If the PLL Source is configured as MSI
+          // Get MSI Frequency
+          rcc_err_t msi_error = RCC_OK;
+          uint32_t get_msi_retval = rcc_get_msi_hz(&msi_error);
+          // If an error occured, report it
+          if(!get_msi_retval){
+            if(error) *error = msi_error;
+            return 0;
+          }
+          // Set the PLL input clock frequency to MSI clock frequency
+          pll_input_clk_hz = get_msi_retval;
+          break;
+        }
+        default: { // If the PLL input clock is not recognised - report error and return 0
+          if(error) *error = RCC_ERR_INVALID_PLL_SRC;
+          return 0; // Invalid PLL Source
+        } 
+      };
 
-    return rcc_calculate_pll_output_hz(pll_input_clk_hz);
-    // Calculate Output Frequency From Ref Manual Equations
+      return rcc_calculate_pll_output_hz(pll_input_clk_hz);
+    }
+    default:{ // If the SYSCLK input is not recognised - report error and return 0
+      if(error) *error = RCC_ERR_INVALID_SYSCLK_SRC;
+      return 0;
+    }
   }
 
-  // Read SWS - System Clock Switch Status
-  return 0;
+  return 0; // If we've made it here something has gone horribly wrong
 }
 
-static size_t rcc_calculate_pll_output_hz(size_t pll_input_clk_hz){
+/**
+ * @brief Calculate the frequency of the PLL output
+ * @param pll_input_clk_hz Frequency of the clock inputted to PLL
+ * @retval The frequency
+ */
+static uint32_t rcc_calculate_pll_output_hz(size_t pll_input_clk_hz){
   if (!pll_input_clk_hz) {
       return 0;
   }
@@ -104,29 +168,36 @@ static size_t rcc_calculate_pll_output_hz(size_t pll_input_clk_hz){
   if (!(RCC->CR & RCC_CR_PLLRDY)) {
       return 0; // PLL not ready
   }
-  uint8_t plln_bits = RCC->PLLCFGR & RCC_PLLCFGR_PLLN;
-  uint8_t pllm_bits = RCC->PLLCFGR & RCC_PLLCFGR_PLLM;
-  uint8_t pllm = pllm_bits + 1; // register stores PLLM = 1 as 000, PLLM = 2 as 001, ...
+  uint32_t plln = (RCC->PLLCFGR & RCC_PLLCFGR_PLLN) >> RCC_PLLCFGR_PLLN_Pos;
+  uint32_t pllm_bits = (RCC->PLLCFGR & RCC_PLLCFGR_PLLM) >> RCC_PLLCFGR_PLLM_Pos;
+  uint32_t pllm = pllm_bits + 1u; // register stores PLLM = 1 as 000, PLLM = 2 as 001, ...
 
-  // uint8_t pllp_bits = RCC->PLLCFGR & RCC_PLLCFGR_PLLP;
-  // uint8_t pllp = pllp_bits ? 17 : 7; // register stores PLLP = 7 as 0, PLLP = 17 as 1
-  // uint8_t pllq_bits = RCC->PLLCFGR & RCC_PLLCFGR_PLLQ;
-  // uint8_t pllq = 2 * (pllq_bits + 1); // register stores PLLQ = 2 as 00, PLLQ = 4 as 01, ...
-  uint8_t pllr_bits = RCC->PLLCFGR & RCC_PLLCFGR_PLLR;
-  uint8_t pllr = 2 * (pllr_bits + 1); // register stores PLLR = 2 as 00, PLLR = 4 as 01, ...
+  uint32_t pllr_bits = (RCC->PLLCFGR & RCC_PLLCFGR_PLLR) >> RCC_PLLCFGR_PLLR_Pos;
+  uint32_t pllr = 2u * (pllr_bits + 1u); // register stores PLLR = 2 as 00, PLLR = 4 as 01, ...
 
-  size_t vco_output_hz = pll_input_clk_hz * (plln_bits / pllm);
-  // size_t pllp_hz = vco_output_hz / pllp; 
-  // size_t pllq_hz = vco_output_hz / pllq; 
-  size_t pllr_hz = (size_t) (vco_output_hz / pllr); // for SYSCLK
+  uint64_t vco_output_hz = ((uint64_t)pll_input_clk_hz / pllm) * plln;
+  uint32_t pllr_hz = (uint32_t)(vco_output_hz / pllr); // for SYSCLK
 
   return pllr_hz; // placeholder
 }
 
-size_t rcc_get_hclk_hz(){
-  // Read AHB Prescaler
-  size_t sysclk_hz = rcc_get_sysclk_hz();
-  uint8_t ahb_prescaler_bits = RCC->CFGR & RCC_CFGR_HPRE;
+/**
+ * @brief Get the frequency of the H-Clock (used for AHB peripherals).
+ * @param error Pointer to an error code - will be updated if an error occurs.
+ * @retval Frequency of H-Clock, 0 - An error has occurred.
+ */
+uint32_t rcc_get_hclk_hz(rcc_err_t* error){
+  // Get the frequncy of the system clock
+  rcc_err_t sysclk_err = RCC_OK;
+  uint32_t sysclk_hz = rcc_get_sysclk_hz(&sysclk_err);
+  // If an error occured report it
+  if(!sysclk_hz){
+    if(error) *error = sysclk_err;
+    return 0;
+  }
+
+  // Get AHB prescaler values
+  uint8_t ahb_prescaler_bits = (RCC->CFGR & RCC_CFGR_HPRE) >> RCC_CFGR_HPRE_Pos;
 
   if ((ahb_prescaler_bits >> 3) == 0) // as per reference manual, if HPRE[3:0] = 0xxx SYSCLK is not divided
     return sysclk_hz;
@@ -145,15 +216,23 @@ size_t rcc_get_hclk_hz(){
   uint16_t ahb_prescaler = ahb_prescaler_value[ahb_prescaler_bits & AHB_PRESCALER_Msk]; // 
   // Validate sysclk_hz doesn't exceed maximum allowed frequency: Section 5.1.7: Dynamic Voltage Scaling Management
   
-  return sysclk_hz / ahb_prescaler;
+  return (uint32_t)sysclk_hz / ahb_prescaler;
 }
 
-size_t  rcc_get_pclk1_hz(){
-  // Read APB1 Prescaler 
-  size_t hclk_hz = rcc_get_hclk_hz();
-  uint8_t apb1_prescaler_bits = RCC->CFGR & RCC_CFGR_PPRE1;
+uint32_t rcc_get_pclk1_hz(rcc_err_t* error){
+  // Get the H-Clock Frequency
+  rcc_err_t hclk_err = RCC_OK;
+  uint32_t hclk_hz = rcc_get_hclk_hz(&hclk_err);
+  // If an error occurred, report it
+  if (!hclk_hz){
+    if(error) *error = hclk_err;
+    return 0;
+  }
   
-  if ((apb1_prescaler_bits >> 3) == 0)
+  // Get APB1 prescaler value
+  uint8_t apb1_prescaler_bits = (RCC->CFGR & RCC_CFGR_PPRE1) >> RCC_CFGR_PPRE1_Pos;
+  
+  if ((apb1_prescaler_bits >> 2) == 0)
     return hclk_hz;
   
   static const uint8_t apb1_prescaler_value[] = {
@@ -164,16 +243,21 @@ size_t  rcc_get_pclk1_hz(){
   };
 
   uint8_t apb1_prescaler = apb1_prescaler_value[apb1_prescaler_bits & APB_PRESCALER_Msk]; 
-  return hclk_hz / apb1_prescaler;
+  return (uint32_t)hclk_hz / apb1_prescaler;
 }
 
-size_t rcc_get_pclk2_hz(){
-  // Read APB2 Prescaler
-  // Read APB1 Prescaler 
-  size_t hclk_hz = rcc_get_hclk_hz();
-  uint8_t apb2_prescaler_bits = RCC->CFGR & RCC_CFGR_PPRE2;
+uint32_t rcc_get_pclk2_hz(rcc_err_t* error){
+  // Get the H-Clock Frequency
+  rcc_err_t hclk_err = RCC_OK;
+  uint32_t hclk_hz = rcc_get_hclk_hz(&hclk_err);
+  // If an error occurred, report it
+  if (!hclk_hz){
+    if(error) *error = hclk_err;
+    return 0;
+  }
+  uint8_t apb2_prescaler_bits = (RCC->CFGR & RCC_CFGR_PPRE2) >> RCC_CFGR_PPRE2_Pos;
 
-  if ((apb2_prescaler_bits >> 3) == 0)
+  if ((apb2_prescaler_bits >> 2) == 0)
     return hclk_hz;
 
   static const uint8_t apb2_prescaler_value[] = {
@@ -185,6 +269,5 @@ size_t rcc_get_pclk2_hz(){
 
   uint8_t apb2_prescaler = apb2_prescaler_value[apb2_prescaler_bits & APB_PRESCALER_Msk];
   
-  return hclk_hz / apb2_prescaler;
-
+  return (uint32_t)hclk_hz / apb2_prescaler;
 }
