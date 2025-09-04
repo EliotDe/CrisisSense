@@ -1,9 +1,36 @@
+/**
+ * @todo Make Manager_Debug_DMA fully asynchronous, it's currently blocking
+ *        - Configure DMA & USART
+ *        - Start DMA transfer
+ *        - Let DMA hardware automatically push bytes to USART
+ *        - Trigger an ISR when the transfer is complete
+ *        - In the ISR, call a callback function provided by the higher level application
+ * 
+ * @todo USART remains the same, the DMA driver needs an interrupt that get triggered on TC
+ *       This Manager configures DMA + USART, stores callback, starts transfer
+ * 
+ * @todo Application Code needs to provide the callback function
+ */
+
 #include "debugging_manager.h"
 #include "usart_driver.h"
 #include "dma_driver.h"
 #include "rcc_driver.h"
 #include "gpio_driver.h"
 #include "stm32l432xx.h"
+
+#define USART2_TX_AF 7u
+
+static uint8_t Manager_DMA_Config(const char* mem_address, size_t length_of_transfer);
+static uint8_t Manager_USART_Config(usart_mode_t usart_mode);
+static uint8_t Manager_GPIO_Config(void);
+static uint8_t Manager_RCC_Config(void);
+
+/*
+usart_config_t usart_cfg = { ...common fields... };
+usart_cfg.dma = (usart_mode == USART_MODE_DMA) ? USART_DMA_TX : USART_DMA_NONE;
+*/
+
 
 /**
  * @brief Runs Debug Manager (blocking) - Essentially Uses USART to print a debug message
@@ -92,7 +119,7 @@ static uint8_t Manager_DMA_Config(const char* mem_address, size_t length_of_tran
   dma_channel_config_t dma_config = {
     .channel_priority = DMA_PRIORITY_LOW,
     .circular_mode = DMA_CIRCULAR_DISABLED,
-    .data_size = length_of_transfer,
+    .data_size = (uint16_t)length_of_transfer,
     .dma_channel = DMA1_Channel7,
     .interrupts = DMA_INT_NONE, //placeholder
     .mem_increment_mode = DMA_MEMORY_INCREMENT_ENABLED,
@@ -115,6 +142,11 @@ static uint8_t Manager_DMA_Config(const char* mem_address, size_t length_of_tran
 
 static uint8_t Manager_USART_Config(usart_mode_t usart_mode){
   usart_err_t usart_cfg_error = USART_OK;
+  rcc_err_t rcc_error = RCC_OK;
+  uint32_t pclk2_hz = rcc_get_pclk2_hz(&rcc_error);
+  if (!pclk2_hz){
+    return 0;
+  }
   if (usart_mode == USART_MODE_DMA){
     usart_config_t usart_cfg = {
     .usart_line = USART2,
@@ -125,7 +157,7 @@ static uint8_t Manager_USART_Config(usart_mode_t usart_mode){
     .oversampling = USART_OVER16,
     .parity = USART_PARITY_NONE,
     .stop_bits = USART_STOP_1,
-    .f_clk = (uint32_t)rcc_get_pclk2_hz(), //placeholder
+    .f_clk = pclk2_hz, 
     .word_length = USART_WORD_LENGTH_8
     };
 
@@ -164,7 +196,7 @@ static uint8_t Manager_GPIO_Config(void) {
     .output_speed = GPIO_OSPEEDR_VERY_HIGH,
     .output_type = GPIO_OTYPER_PUSH_PULL,
     .pupdr_config = GPIO_PUPDR_NONE,
-    .alternate_function_code = 0b0111       // AF7
+    .alternate_function_code = USART2_TX_AF       // AF7
   };
 
   gpio_error_t gpio_err = GPIO_OK;
@@ -179,8 +211,8 @@ static uint8_t Manager_RCC_Config(void) {
   RCC->AHB2ENR |= RCC_AHB2ENR_GPIOAEN;    //GPIOA Clock
   RCC->APB1ENR1 |= RCC_APB1ENR1_USART2EN; //USART2 Clock
   RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;     //DMA1 Clock
-    // Enable HSE and configure PLL if necessary
-    // HSI - default
+    // Enable HSE and configure PLL if necessary, higher speeds!!!
+    // HSI - default 16MHz, ok for baud rate = 9600
     // Adjust later
   return 1;
 }
