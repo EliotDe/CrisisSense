@@ -57,7 +57,7 @@ typedef enum{
 }dma_transfer_direction_t;
 
 typedef uint32_t dma_irq_mask_t;
-enum{ // bitwise enum
+typedef enum{ // bitwise enum
     DMA_INT_NONE = 0u,
     DMA_INT_HALF_TRANSFER = DMA_CCR_HTIE,
     DMA_INT_TRANSFER_COMPLETE = DMA_CCR_TCIE,

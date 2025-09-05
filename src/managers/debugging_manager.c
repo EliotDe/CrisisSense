@@ -10,6 +10,10 @@
  *       This Manager configures DMA + USART, stores callback, starts transfer
  * 
  * @todo Application Code needs to provide the callback function
+ * 
+ * @todo Consider altering string implementation, possibly cache repeated strings
+ *       Consider a struct with length and string
+ *       If expanding consider stack-based formatting
  */
 
 #include "debugging_manager.h"
@@ -18,6 +22,7 @@
 #include "rcc_driver.h"
 #include "gpio_driver.h"
 #include "stm32l432xx.h"
+// #include <string.h>
 
 #define USART2_TX_AF 7u
 
@@ -25,6 +30,7 @@ static uint8_t Manager_DMA_Config(const char* mem_address, size_t length_of_tran
 static uint8_t Manager_USART_Config(usart_mode_t usart_mode);
 static uint8_t Manager_GPIO_Config(void);
 static uint8_t Manager_RCC_Config(void);
+static size_t strlen(const char* s);
 
 /*
 usart_config_t usart_cfg = { ...common fields... };
@@ -127,7 +133,7 @@ static uint8_t Manager_DMA_Config(const char* mem_address, size_t length_of_tran
     .mem_size = DMA_MSIZE_8,
     .periph_size = DMA_PSIZE_8,
     .memory_address = mem_address,
-    .periph_address = &USART2->TDR,
+    .periph_address = (const void*)&USART2->TDR,
     .transfer_direction = DMA_READ_FROM_MEMORY
   };
 
@@ -215,4 +221,13 @@ static uint8_t Manager_RCC_Config(void) {
     // HSI - default 16MHz, ok for baud rate = 9600
     // Adjust later
   return 1;
+}
+
+// TODO: Move to utils.c  -- I use the flag -nostdlib so i need this
+static size_t strlen(const char* s){
+  const char* p = s;
+  while (*p) {
+    p++;
+  }
+  return (size_t)(p-s);
 }

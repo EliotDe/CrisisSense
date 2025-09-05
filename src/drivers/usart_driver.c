@@ -235,6 +235,13 @@ uint8_t usart_transmit(USART_TypeDef* usart_line, const usart_dataPacket_t* data
         return 0;
     }
 
+    if(!(usart_line->CR1 & USART_CR1_UE)){ // If USART isn't enabled enable it
+      usart_line->CR1 |= USART_CR1_UE;
+    }
+    if(!(usart_line->CR1 & USART_CR1_TE)){// If Transmission isn't enabled enable it
+      usart_line->CR1 |= USART_CR1_TE;
+    }
+
     // Send Data
     if(data_packet->mode == USART_MODE_POLLING){
         usart_err_t puts_error = USART_OK;

@@ -16,6 +16,9 @@
 #define AHB_PRESCALER_Msk 0x7U
 #define APB_PRESCALER_Msk 0x3U
 
+static uint32_t rcc_calculate_pll_output_hz(uint32_t pll_input_clk_hz);  
+static uint32_t rcc_get_sysclk_hz(rcc_err_t* error);
+static uint32_t rcc_get_hclk_hz(rcc_err_t* error);
 
 // HSI frequency lookup table - could differ depending on HSI or PLL mode
 static const uint32_t msi_frequency_table[] = {
@@ -72,8 +75,10 @@ static uint32_t rcc_get_msi_hz(rcc_err_t* error){
 /**
  * @brief Calculates the System Clock Frequency in Hertz (Hz)
  * @retval System Clock Frequency
+ * 
+ * @note to appease cppcheck i have given this function static linkage - this may change
  */
-uint32_t rcc_get_sysclk_hz(rcc_err_t* error){
+static uint32_t rcc_get_sysclk_hz(rcc_err_t* error){
   uint8_t sysclk_src = RCC->CFGR & RCC_CFGR_SWS;
 
   switch(sysclk_src){
@@ -104,7 +109,7 @@ uint32_t rcc_get_sysclk_hz(rcc_err_t* error){
       return get_msi_retval;
     }
     case RCC_CFGR_SWS_PLL: { // If the SYSCLK Source is configured as PLL
-      size_t pll_input_clk_hz;
+      uint32_t pll_input_clk_hz;
       uint8_t pll_clk_src = RCC->PLLCFGR & RCC_PLLCFGR_PLLSRC;
       switch(pll_clk_src){ 
         case RCC_PLLCFGR_PLLSRC_HSE: { // If the PLL Source is configured as HSE
@@ -160,7 +165,7 @@ uint32_t rcc_get_sysclk_hz(rcc_err_t* error){
  * @param pll_input_clk_hz Frequency of the clock inputted to PLL
  * @retval The frequency
  */
-static uint32_t rcc_calculate_pll_output_hz(size_t pll_input_clk_hz){
+static uint32_t rcc_calculate_pll_output_hz(uint32_t pll_input_clk_hz){
   if (!pll_input_clk_hz) {
       return 0;
   }
@@ -175,7 +180,7 @@ static uint32_t rcc_calculate_pll_output_hz(size_t pll_input_clk_hz){
   uint32_t pllr_bits = (RCC->PLLCFGR & RCC_PLLCFGR_PLLR) >> RCC_PLLCFGR_PLLR_Pos;
   uint32_t pllr = 2u * (pllr_bits + 1u); // register stores PLLR = 2 as 00, PLLR = 4 as 01, ...
 
-  uint64_t vco_output_hz = ((uint64_t)pll_input_clk_hz / pllm) * plln;
+  uint32_t vco_output_hz = ((uint32_t)pll_input_clk_hz / pllm) * plln;
   uint32_t pllr_hz = (uint32_t)(vco_output_hz / pllr); // for SYSCLK
 
   return pllr_hz; // placeholder
@@ -185,8 +190,10 @@ static uint32_t rcc_calculate_pll_output_hz(size_t pll_input_clk_hz){
  * @brief Get the frequency of the H-Clock (used for AHB peripherals).
  * @param error Pointer to an error code - will be updated if an error occurs.
  * @retval Frequency of H-Clock, 0 - An error has occurred.
+ * 
+ * @note To appease cppcheck I have given this function static linkage, this may change
  */
-uint32_t rcc_get_hclk_hz(rcc_err_t* error){
+static uint32_t rcc_get_hclk_hz(rcc_err_t* error){
   // Get the frequncy of the system clock
   rcc_err_t sysclk_err = RCC_OK;
   uint32_t sysclk_hz = rcc_get_sysclk_hz(&sysclk_err);

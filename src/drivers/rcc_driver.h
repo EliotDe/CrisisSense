@@ -12,9 +12,10 @@ typedef enum{
   RCC_ERR_INVALID_SYSCLK_SRC = -5
 }rcc_err_t;
 
-size_t rcc_get_sysclk_hz();
-size_t rcc_get_hclk_hz();
-size_t rcc_get_pclk1_hz();
-size_t rcc_get_pclk2_hz();
+// Removed to appease cppcheck
+// uint32_t  rcc_get_sysclk_hz();
+// uint32_t  rcc_get_hclk_hz();
+uint32_t  rcc_get_pclk1_hz();
+uint32_t  rcc_get_pclk2_hz();
 
 #endif

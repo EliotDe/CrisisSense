@@ -54,6 +54,7 @@ uint8_t dma_config_channel(dma_channel_config_t* cfg, dma_err_t* error){
         case DMA_PRIORITY_MEDIUM: dma_register_set_bit(&ccr, DMA_CCR_PL_0); break; // set PL bits to 01 (header definitions are a bit weird)
         case DMA_PRIORITY_HIGH: dma_register_set_bit(&ccr, DMA_CCR_PL_1); break; // set PL bits to 10 
         case DMA_PRIORITY_VERY_HIGH: dma_register_set_bit(&ccr, DMA_CCR_PL); break; // sets PL bits to 11
+        case DMA_PRIORITY_LOW: break; // Already handled by clearing bit
     }
 
     // Configure MSIZE

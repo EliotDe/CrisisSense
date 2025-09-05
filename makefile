@@ -7,14 +7,14 @@ CMSIS_DEVICE_INCLUDE_DIR = $(CMSIS_DEVICE_DIR)/Include
 SRC_ROOT_DIR = src
 APP_DIR = $(SRC_ROOT_DIR)/app
 DRIVERS_DIR = $(SRC_ROOT_DIR)/drivers
-MANAGERS_DIR = $(SRC_ROOT_DIR)/manager
+MANAGERS_DIR = $(SRC_ROOT_DIR)/managers
 TESTS_DIR = tests
 
 UNITY_DIR = unity
 UNITY_SRC_DIR = $(UNITY_DIR)/src
 
-INCLUDE_DIRS = $(CMSIS_DEVICE_INCLUDE_DIR) $(DRIVERS_DIR) $(CMSIS_CORE_DIR)
-CPPCHECK_INCLUDE_DIRS = $(DRIVERS_DIR)
+INCLUDE_DIRS = $(CMSIS_DEVICE_INCLUDE_DIR) $(APP_DIR) $(DRIVERS_DIR) $(MANAGERS_DIR) $(CMSIS_CORE_DIR)
+CPPCHECK_INCLUDE_DIRS = $(DRIVERS_DIR) $(MANAGERS_DIR) $(APP_DIR)
 
 BUILD_DIR = build
 OBJ_DIR = $(BUILD_DIR)/obj
@@ -54,7 +54,7 @@ LDSCRIPT = stm32l432kc.ld
 MCU = stm32l432kc
 WFLAGS = -Wall -Wextra -Werror -Wshadow
 CFLAGS = -mcpu=cortex-m4 -mthumb -O2 -ffreestanding -g $(WFLAGS)
-CFLAGS += $(addprefix -I,$(INCLUDE_DIRS))
+CFLAGS += $(addprefix -I,$(INCLUDE_DIRS)) -I.
 LDFLAGS = -T $(LDSCRIPT) -nostdlib -Wl,-Map=$(MAP)
 
 # Flags - Testing
@@ -70,9 +70,13 @@ C_SRC = \
 	src/drivers/i2c_driver.c \
 	src/drivers/spi_driver.c \
 	src/drivers/usart_driver.c \
+	src/drivers/dma_driver.c \
+	src/drivers/rcc_driver.c \
+	src/drivers/gpio_driver.c \
 	src/managers/comms_manager.c \
 	src/managers/logging_manager.c \
 	src/managers/sensor_manager.c \
+	src/managers/debugging_manager.c
 	#tests/main_test.c
 
 CMSIS_C_SRC = $(CMSIS_DEVICE_DIR)/system_stm32l4xx.c 
@@ -179,7 +183,7 @@ cppcheck:
 		--inline-suppr \
 		--max-configs=20 \
 		-UUNIT_TEST \
-		$(addprefix -I,$(INCLUDE_DIRS)) \
+		$(addprefix -I,$(INCLUDE_DIRS)) -I.\
 		$(CPPCHECK_SRC)
 
 cppcheck-debug:
