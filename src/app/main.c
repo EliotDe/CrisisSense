@@ -13,7 +13,7 @@ void main(){
   /*\\// \\// \\// \\// \\// \\// \\// \\// \\// \\//*/
   /*//\\ //\\ //\\ //\\ //\\ //\\ //\\ //\\ //\\ //\\*/
   const char* msg = "hello world!";
-  uint8_t manager_retval = Manager_Debug_Polling(msg);
+  uint8_t manager_retval = Manager_Debug_DMA(msg); //Manager_Debug_Polling(msg);
 
   if(manager_retval == 0){
     LED_Init();

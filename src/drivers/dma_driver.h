@@ -71,6 +71,8 @@ typedef enum{
 
 typedef struct{
     DMA_Channel_TypeDef* dma_channel;
+    uint8_t dma_channel_number;
+    uint8_t dma_channel_request;
     const void* periph_address;
     const void* memory_address;
     dma_memory_increment_mode_t mem_increment_mode;
@@ -85,7 +87,7 @@ typedef struct{
 }dma_channel_config_t;
 
 /************* DMA CONFIGURATION FUNCTIONS *************/
-uint8_t dma_config_channel(dma_channel_config_t* cfg, dma_err_t* error);
+uint8_t dma_config_channel(const DMA_TypeDef* dma_line, dma_channel_config_t* cfg, dma_err_t* error);
 /********************* DMA HELPERS *********************/
 static inline void dma_register_set_bit(uint32_t* reg, uint32_t bit){*reg |= bit;}
 static inline void dma_register_clear_bit(uint32_t* reg, uint32_t bit){*reg &= ~bit;}

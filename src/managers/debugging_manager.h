@@ -7,6 +7,6 @@
 
 
 uint8_t Manager_Debug_Polling(const char* debug_msg);
-uint8_t Manager_Debug_DMA(const char* mem_address, size_t length_of_transfer);
+uint8_t Manager_Debug_DMA(const char* mem_address);
 
 #endif

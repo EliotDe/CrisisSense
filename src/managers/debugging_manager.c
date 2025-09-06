@@ -25,6 +25,7 @@
 // #include <string.h>
 
 #define USART2_TX_AF 7u
+#define USART2_TX_REQUEST_CODE 2u
 
 static uint8_t Manager_DMA_Config(const char* mem_address, size_t length_of_transfer);
 static uint8_t Manager_USART_Config(usart_mode_t usart_mode);
@@ -80,24 +81,26 @@ uint8_t Manager_Debug_Polling(const char* debug_msg){
  *       If needed change to a const void* type and then to uint16_t or uint8_t depending
  *       on word-length. Though for this application I see no reason why you would.
  */
-uint8_t Manager_Debug_DMA(const char* mem_address, size_t length_of_transfer){
+uint8_t Manager_Debug_DMA(const char* mem_address){
   if(!mem_address){
     return 0;
   }
   Manager_RCC_Config();
   Manager_GPIO_Config();
-  uint8_t dma_config_retval = Manager_DMA_Config(mem_address, length_of_transfer);
-  if (!dma_config_retval){
-    return 0;
-  }
+
+  // Configure USART then DMA - DMAT bit must be set before enabling DMA
   uint8_t usart_config_retval = Manager_USART_Config(USART_MODE_DMA);
   if(!usart_config_retval){
+    return 0;
+  }
+  uint8_t dma_config_retval = Manager_DMA_Config(mem_address, strlen(mem_address));
+  if (!dma_config_retval){
     return 0;
   }
 
   usart_dataPacket_t data_packet = {
     .buffer = mem_address, 
-    .length = length_of_transfer,
+    .length = strlen(mem_address),
     .word_length = USART_WORD_LENGTH_8,
     .mode = USART_MODE_DMA
   };
@@ -122,11 +125,13 @@ static uint8_t Manager_DMA_Config(const char* mem_address, size_t length_of_tran
     return 0;
   }
 
-  dma_channel_config_t dma_config = {
+  dma_channel_config_t dma_channel_config = {
     .channel_priority = DMA_PRIORITY_LOW,
     .circular_mode = DMA_CIRCULAR_DISABLED,
     .data_size = (uint16_t)length_of_transfer,
     .dma_channel = DMA1_Channel7,
+    .dma_channel_number = USART2_TX_AF,
+    .dma_channel_request = USART2_TX_REQUEST_CODE,
     .interrupts = DMA_INT_NONE, //placeholder
     .mem_increment_mode = DMA_MEMORY_INCREMENT_ENABLED,
     .periph_increment_mode = DMA_PERIPH_INCREMENT_DISABLED,
@@ -138,7 +143,7 @@ static uint8_t Manager_DMA_Config(const char* mem_address, size_t length_of_tran
   };
 
   dma_err_t dma_error = DMA_OK;
-  uint8_t dma_config_retval = dma_config_channel(&dma_config, &dma_error);
+  uint8_t dma_config_retval = dma_config_channel(DMA1, &dma_channel_config, &dma_error);
   if (!dma_config_retval){
     return 0;
   }
