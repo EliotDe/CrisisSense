@@ -1,40 +1,46 @@
 #include "stm32l432xx.h"
+#include "src/managers/debugging_manager.h"
 
-#define OUTPUT_MODE 1
+#define LED_PIN 3
+#define LED_PORT GPIOB 
 
-#define TOGGLE_BIT(REG, BIT)    ((REG) ^= (1U << BIT))
-
-#define BLINK_DELAY 1000000
-
-static void delay(volatile uint32_t d);
+static void LED_Init();
 
 void main(){
-    /*//\\ //\\ //\\ //\\ //\\ //\\ //\\ //\\ //\\ //\\*/
-    /*\\// \\// \\// \\// \\// \\// \\// \\// \\// \\//*/
-    /*//\\ //\\  Theres nothing here yet //\\ //\\ //\\ -- there is now*/
-    /*\\// \\// \\// \\// \\// \\// \\// \\// \\// \\//*/
-    /*//\\ //\\ //\\ //\\ //\\ //\\ //\\ //\\ //\\ //\\*/
-    int i;
+  /*//\\ //\\ //\\ //\\ //\\ //\\ //\\ //\\ //\\ //\\*/
+  /*\\// \\// \\// \\// \\// \\// \\// \\// \\// \\//*/
+  /*//\\ //\\  Theres nothing here yet //\\ //\\ //\\ -- there is now*/
+  /*\\// \\// \\// \\// \\// \\// \\// \\// \\// \\//*/
+  /*//\\ //\\ //\\ //\\ //\\ //\\ //\\ //\\ //\\ //\\*/
+  const char* msg = "hello world!";
+  uint8_t manager_retval = Manager_Debug_DMA(msg); //Manager_Debug_Polling(msg);
 
-    /* configure clock for AHB1 bus */
-    RCC -> AHB2ENR |= RCC_AHB2ENR_GPIOBEN;
+  if(manager_retval == 0){
+    LED_Init();
+  }
 
-    /* clear the value for the green led in moder register */
-    GPIOB -> MODER &= ~GPIO_MODER_MODE3;
-    /* set the mode to general purpose output */
-    GPIOB -> MODER |= (OUTPUT_MODE << GPIO_MODER_MODE3_Pos);
-
-    // ten blinks
-    for(i=0; i < 10; ++i){
-        TOGGLE_BIT(GPIOB -> ODR, 3);
-        delay(BLINK_DELAY);
-    }
-
-    /* prevent undefined behaviour after return from main */
-    while(1);
+  while(1);
 }
 
-static void delay(volatile uint32_t d){
-    while (d--)
-        __NOP();
+
+static void LED_Init(){
+  /* configure clock for AHB1 bus */
+  RCC -> AHB2ENR |= RCC_AHB2ENR_GPIOBEN;
+
+  /* clear the value for the green led in moder register */
+  LED_PORT -> MODER &= ~GPIO_MODER_MODE3;
+  /* set the mode to general purpose output */
+  LED_PORT -> MODER |= (0x1 << GPIO_MODER_MODE3_Pos);
+
+  LED_PORT -> OTYPER &= ~(1 << LED_PIN);          // Push-pull
+  LED_PORT -> OSPEEDR &= ~(0x3 << (LED_PIN * 2)); // Low speed
+  LED_PORT -> PUPDR &= ~(0x3 << (LED_PIN * 2));   // No pull-up/pull-down
+
+
+  /* prevent undefined behaviour after return from main */
+  while(1){
+    LED_PORT -> ODR ^= (1 << LED_PIN);
+
+    for(volatile uint32_t i=0; i<100000; i++);
+  }
 }
