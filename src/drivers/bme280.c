@@ -40,6 +40,7 @@
  * @brief Sensor driver for BME280 sensor
  */
 #include "bme280.h"
+#include "bme280_defs.h"
 
 /**\name Internal macros */
 /* To identify osr settings selected by user */
@@ -320,6 +321,53 @@ static void parse_sensor_data(const uint8_t *reg_data, struct bme280_uncomp_data
  */
 static int8_t reload_device_settings(const struct bme280_settings *settings, struct bme280_dev *dev);
 
+
+/*==================================== REMOVE THE FOLLOWING ==============================================*/
+                                     
+/*!
+ * @brief This API reads the data from the given register address of the sensor.
+ * @note I made this function static to appease cppcheck, This will change
+ */
+static int8_t bme280_get_regs(uint8_t reg_addr, uint8_t *reg_data, uint32_t len, struct bme280_dev *dev);
+
+
+/*!
+ * @brief This API writes the given data to the register address
+ * of the sensor.
+ * @note I made this function static to appease cppcheck, This will change
+ */
+static int8_t bme280_set_regs(uint8_t *reg_addr, const uint8_t *reg_data, uint32_t len, struct bme280_dev *dev);
+
+
+/*!
+ * @brief This API gets the power mode of the sensor.
+ * @note I made this function static to appease cppcheck, This will change
+ */
+static int8_t bme280_get_sensor_mode(uint8_t *sensor_mode, struct bme280_dev *dev);
+
+
+/*!
+ * @brief This API performs the soft reset of the sensor.
+ * @note I made this function static to appease cppcheck, This will change
+ */
+static int8_t bme280_soft_reset(struct bme280_dev *dev);
+
+
+
+/*!
+ * @brief This API is used to compensate the pressure and/or
+ * temperature and/or humidity data according to the component selected
+ * by the user.
+ *  @note I made this function static to appease cppcheck, This will change
+ */
+static int8_t bme280_compensate_data(uint8_t sensor_comp,
+                              const struct bme280_uncomp_data *uncomp_data,
+                              struct bme280_data *comp_data,
+                              struct bme280_calib_data *calib_data);
+
+/*==================================== REMOVE THE FOLLOWING ==============================================*/
+                      
+
 #ifdef BME280_DOUBLE_ENABLE
 
 /*!
@@ -416,6 +464,7 @@ int8_t bme280_init(struct bme280_dev *dev)
     uint8_t chip_id = 0;
 
     /* Read the chip-id of bme280 sensor */
+    // cppcheck-suppress syntaxError
     rslt = bme280_get_regs(BME280_REG_CHIP_ID, &chip_id, 1, dev);
 
     /* Check for chip id validity */
@@ -445,8 +494,9 @@ int8_t bme280_init(struct bme280_dev *dev)
 
 /*!
  * @brief This API reads the data from the given register address of the sensor.
+ * @note I made this function static to appease cppcheck, This will change
  */
-int8_t bme280_get_regs(uint8_t reg_addr, uint8_t *reg_data, uint32_t len, struct bme280_dev *dev)
+static int8_t bme280_get_regs(uint8_t reg_addr, uint8_t *reg_data, uint32_t len, struct bme280_dev *dev)
 {
     int8_t rslt;
 
@@ -481,13 +531,14 @@ int8_t bme280_get_regs(uint8_t reg_addr, uint8_t *reg_data, uint32_t len, struct
 /*!
  * @brief This API writes the given data to the register address
  * of the sensor.
+ * @note I made this function static to appease cppcheck, This will change
  */
-int8_t bme280_set_regs(uint8_t *reg_addr, const uint8_t *reg_data, uint32_t len, struct bme280_dev *dev)
+static int8_t bme280_set_regs(uint8_t *reg_addr, const uint8_t *reg_data, uint32_t len, struct bme280_dev *dev)
 {
     int8_t rslt;
-    uint8_t temp_buff[20]; /* Typically not to write more than 10 registers */
-    uint32_t temp_len;
-    uint32_t reg_addr_cnt;
+    //uint8_t temp_buff[20]; /* Typically not to write more than 10 registers */
+    //uint32_t temp_len;
+    //uint32_t reg_addr_cnt;
 
     if (len > BME280_MAX_LEN)
     {
@@ -502,11 +553,14 @@ int8_t bme280_set_regs(uint8_t *reg_addr, const uint8_t *reg_data, uint32_t len,
     {
         if (len != 0)
         {
+            uint8_t temp_buff[20];
+            uint32_t temp_len;
             temp_buff[0] = reg_data[0];
 
             /* If interface selected is SPI */
             if (dev->intf != BME280_I2C_INTF)
             {
+                uint32_t reg_addr_cnt;
                 for (reg_addr_cnt = 0; reg_addr_cnt < len; reg_addr_cnt++)
                 {
                     reg_addr[reg_addr_cnt] = reg_addr[reg_addr_cnt] & 0x7F;
@@ -602,10 +656,11 @@ int8_t bme280_set_sensor_settings(uint8_t desired_settings,
 int8_t bme280_get_sensor_settings(struct bme280_settings *settings, struct bme280_dev *dev)
 {
     int8_t rslt;
-    uint8_t reg_data[4];
+    //uint8_t reg_data[4];
 
     if (settings != NULL)
     {
+        uint8_t reg_data[4];
         rslt = bme280_get_regs(BME280_REG_CTRL_HUM, reg_data, 4, dev);
 
         if (rslt == BME280_OK)
@@ -650,8 +705,9 @@ int8_t bme280_set_sensor_mode(uint8_t sensor_mode, struct bme280_dev *dev)
 
 /*!
  * @brief This API gets the power mode of the sensor.
+ * @note I made this function static to appease cppcheck, This will change
  */
-int8_t bme280_get_sensor_mode(uint8_t *sensor_mode, struct bme280_dev *dev)
+static int8_t bme280_get_sensor_mode(uint8_t *sensor_mode, struct bme280_dev *dev)
 {
     int8_t rslt;
 
@@ -673,13 +729,14 @@ int8_t bme280_get_sensor_mode(uint8_t *sensor_mode, struct bme280_dev *dev)
 
 /*!
  * @brief This API performs the soft reset of the sensor.
+ * @note I made this function static to appease cppcheck, This will change
  */
-int8_t bme280_soft_reset(struct bme280_dev *dev)
+static int8_t bme280_soft_reset(struct bme280_dev *dev)
 {
     int8_t rslt;
     uint8_t reg_addr = BME280_REG_RESET;
     uint8_t status_reg = 0;
-    uint8_t try_run = 5;
+    //uint8_t try_run = 5;
 
     /* 0xB6 is the soft reset command */
     uint8_t soft_rst_cmd = BME280_SOFT_RESET_COMMAND;
@@ -689,10 +746,12 @@ int8_t bme280_soft_reset(struct bme280_dev *dev)
 
     if (rslt == BME280_OK)
     {
+        uint8_t try_run = 5;
         /* If NVM not copied yet, Wait for NVM to copy */
         do
         {
             /* As per data sheet - Table 1, startup time is 2 ms. */
+            // cppcheck-suppress syntaxError
             dev->delay_us(BME280_STARTUP_DELAY, dev->intf_ptr);
             rslt = bme280_get_regs(BME280_REG_STATUS, &status_reg, 1, dev);
 
@@ -719,11 +778,12 @@ int8_t bme280_get_sensor_data(uint8_t sensor_comp, struct bme280_data *comp_data
     /* Array to store the pressure, temperature and humidity data read from
      * the sensor
      */
-    uint8_t reg_data[BME280_LEN_P_T_H_DATA] = { 0 };
+    //uint8_t reg_data[BME280_LEN_P_T_H_DATA] = { 0 };
     struct bme280_uncomp_data uncomp_data = { 0 };
 
     if (comp_data != NULL)
     {
+        uint8_t reg_data[BME280_LEN_P_T_H_DATA] = { 0 };
         /* Read the pressure and temperature data from the sensor */
         rslt = bme280_get_regs(BME280_REG_DATA, reg_data, BME280_LEN_P_T_H_DATA, dev);
 
@@ -750,8 +810,9 @@ int8_t bme280_get_sensor_data(uint8_t sensor_comp, struct bme280_data *comp_data
  * @brief This API is used to compensate the pressure and/or
  * temperature and/or humidity data according to the component selected
  * by the user.
+ *  @note I made this function static to appease cppcheck, This will change
  */
-int8_t bme280_compensate_data(uint8_t sensor_comp,
+static int8_t bme280_compensate_data(uint8_t sensor_comp,
                               const struct bme280_uncomp_data *uncomp_data,
                               struct bme280_data *comp_data,
                               struct bme280_calib_data *calib_data)
@@ -799,15 +860,18 @@ int8_t bme280_compensate_data(uint8_t sensor_comp,
 int8_t bme280_cal_meas_delay(uint32_t *max_delay, const struct bme280_settings *settings)
 {
     int8_t rslt = BME280_OK;
-    uint8_t temp_osr;
-    uint8_t pres_osr;
-    uint8_t hum_osr;
+    //uint8_t temp_osr;
+    //uint8_t pres_osr;
+    //uint8_t hum_osr;
 
     /* Array to map OSR config register value to actual OSR */
-    uint8_t osr_sett_to_act_osr[] = { 0, 1, 2, 4, 8, 16 };
+    const uint8_t osr_sett_to_act_osr[] = { 0, 1, 2, 4, 8, 16 };
 
     if ((settings != NULL) && (max_delay != NULL))
     {
+        uint8_t temp_osr;
+        uint8_t pres_osr;
+        uint8_t hum_osr;
         /* Mapping osr settings to the actual osr values e.g. 0b101 -> osr X16 */
         if (settings->osr_t <= BME280_OVERSAMPLING_16X)
         {
@@ -1164,7 +1228,7 @@ static double compensate_pressure(const struct bme280_uncomp_data *uncomp_data,
     double var3;
     double pressure;
     double pressure_min = 30000.0;
-    double pressure_max = 110000.0;
+    //double pressure_max = 110000.0;
 
     var1 = ((double)calib_data->t_fine / 2.0) - 64000.0;
     var2 = var1 * var1 * ((double)calib_data->dig_p6) / 32768.0;
@@ -1177,6 +1241,7 @@ static double compensate_pressure(const struct bme280_uncomp_data *uncomp_data,
     /* Avoid exception caused by division by zero */
     if (var1 > (0.0))
     {
+        double pressure_max = 110000.0;
         pressure = 1048576.0 - (double) uncomp_data->pressure;
         pressure = (pressure - (var2 / 4096.0)) * 6250.0 / var1;
         var1 = ((double)calib_data->dig_p9) * pressure * pressure / 2147483648.0;
@@ -1336,10 +1401,10 @@ static uint32_t compensate_pressure(const struct bme280_uncomp_data *uncomp_data
     int32_t var2;
     int32_t var3;
     int32_t var4;
-    uint32_t var5;
+    //uint32_t var5;
     uint32_t pressure;
     uint32_t pressure_min = 30000;
-    uint32_t pressure_max = 110000;
+    //uint32_t pressure_max = 110000;
 
     var1 = (((int32_t)calib_data->t_fine) / 2) - (int32_t)64000;
     var2 = (((var1 / 4) * (var1 / 4)) / 2048) * ((int32_t)calib_data->dig_p6);
@@ -1353,6 +1418,8 @@ static uint32_t compensate_pressure(const struct bme280_uncomp_data *uncomp_data
     /* Avoid exception caused by division by zero */
     if (var1)
     {
+        uint32_t pressure_max = 110000;
+        uint32_t var5;
         var5 = (uint32_t)((uint32_t)1048576) - uncomp_data->pressure;
         pressure = ((uint32_t)(var5 - (uint32_t)(var2 / 4096))) * 3125;
 
@@ -1532,20 +1599,22 @@ static void parse_humidity_calib_data(const uint8_t *reg_data, struct bme280_dev
  */
 static uint8_t are_settings_changed(uint8_t sub_settings, uint8_t desired_settings)
 {
-    uint8_t settings_changed = FALSE;
+    // uint8_t settings_changed = FALSE;
 
-    if (sub_settings & desired_settings)
-    {
-        /* User wants to modify this particular settings */
-        settings_changed = TRUE;
-    }
-    else
-    {
-        /* User don't want to modify this particular settings */
-        settings_changed = FALSE;
-    }
+    // if (sub_settings & desired_settings)
+    // {
+    //     /* User wants to modify this particular settings */
+    //     settings_changed = TRUE;
+    // }
+    // else
+    // {
+    //     /* User don't want to modify this particular settings */
+    //     settings_changed = FALSE;
+    // }
 
-    return settings_changed;
+    // return settings_changed;
+
+    return (sub_settings & desired_settings) ? TRUE : FALSE;
 }
 
 /*!
