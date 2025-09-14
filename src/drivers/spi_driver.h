@@ -253,7 +253,7 @@ int8_t spi_config(SPI_TypeDef* spi_line, const spi_config_t* cfg);
 int8_t spi_enable(SPI_TypeDef* spi_line);
 int8_t spi_disable(SPI_TypeDef* spi_line, spi_rxonly_t rxonly);
 int8_t spi_disable_nonblocking(SPI_TypeDef* spi_line, uint8_t rxonly);
-int8_t spi_is_enabled(SPI_TypeDef* spi_line);
+int8_t spi_is_enabled(const SPI_TypeDef* spi_line);
 int8_t spi_assert_nss(SPI_TypeDef* spi_line);
 
 /*============== TRANSMIT FUNCTIONS =================*/
@@ -264,7 +264,7 @@ int8_t spi_set_dmatxen(SPI_TypeDef* spi_line, uint8_t en);
 
 /*============== RECEIVE FUNCTIONS =================*/
 
-int8_t spi_receive_polling(SPI_TypeDef* spi_line, void* buffer, uint8_t data_size);
+int8_t spi_receive_polling(SPI_TypeDef* spi_line, void* buffer, uint32_t length, uint8_t data_size);
 int8_t spi_set_dmarxen(SPI_TypeDef* spi_line, uint8_t en);
 
 /*============== ISR FUNCTIONS =================*/
@@ -277,22 +277,18 @@ void SPI3_IRQHandler();
 /**
  * @brief Writes bits, or a bit, to a register. First clearing and then writing.
  * @param reg Pointer to the register where the bits will be written
- * @param reg_length Size of the register
  * @param mask Mask of the bits to be written - used to clear the bits
  * @param pos Position in the register to write the bits to
  * @param value The Bits to be written
  * 
  * @retval An error code or SPI_OK
  */
-static inline int8_t write_bits(void* reg, uint8_t reg_length, uint32_t  mask, uint32_t pos, uint8_t value){
+static inline int8_t write_bits(volatile uint32_t* reg, uint32_t  mask, uint32_t pos, uint8_t value){
   if(!reg)
     return SPI_ERR_INVALID_PARAM;
   
-  if(reg_length == 32)
-    *(uint32_t*)reg = (*(uint32_t*)reg & ~(mask << pos)) | (value << pos);
-  else
-    *(uint16_t*)reg = (*(uint16_t*)reg & ~(mask << pos)) | (value << pos);
-  
+  *reg = (*reg & ~mask ) | ((value << pos) & mask);
+
   return SPI_OK;
 }
 
