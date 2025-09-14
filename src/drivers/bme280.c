@@ -714,7 +714,6 @@ int8_t bme280_set_sensor_mode(uint8_t sensor_mode, struct bme280_dev *dev)
 static int8_t bme280_get_sensor_mode(uint8_t *sensor_mode, struct bme280_dev *dev)
 {
     int8_t rslt;
-    uint8_t reg_data = 0; // Use seperate variable for register read
 
     if ((sensor_mode == NULL) || (dev == NULL)){
       return BME280_E_NULL_PTR;
@@ -726,6 +725,7 @@ static int8_t bme280_get_sensor_mode(uint8_t *sensor_mode, struct bme280_dev *de
     rslt = bme280_get_regs(BME280_REG_PWR_CTRL, sensor_mode, 1, dev);
     
     if(rslt == BME280_OK){
+      uint8_t reg_data = 0; // Use seperate variable for register read
       /* Assign the power mode to variable */
       *sensor_mode = BME280_GET_BITS_POS_0(reg_data, BME280_SENSOR_MODE);
     }
@@ -768,7 +768,8 @@ static int8_t bme280_soft_reset(struct bme280_dev *dev)
         {
             /* As per data sheet - Table 1, startup time is 2 ms. */
             // cppcheck-suppress syntaxError
-            dev->delay_us(BME280_STARTUP_DELAY, dev->intf_ptr);
+            bme280_delay_us_fptr_t delay_fn = dev->delay_us;
+            delay_fn(BME280_STARTUP_DELAY, dev->intf_ptr);
 
             void (*delay_func)(uint32_t, void*) = dev->delay_us;
             delay_func(BME280_STARTUP_DELAY, dev->intf_ptr);
