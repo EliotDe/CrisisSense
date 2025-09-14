@@ -682,7 +682,11 @@ int8_t bme280_get_sensor_settings(struct bme280_settings *settings, struct bme28
 int8_t bme280_set_sensor_mode(uint8_t sensor_mode, struct bme280_dev *dev)
 {
     int8_t rslt;
-    uint8_t last_set_mode;
+    uint8_t last_set_mode = 0;
+
+    if(dev == NULL) {
+      return BME280_E_NULL_PTR;
+    }
 
     rslt = bme280_get_sensor_mode(&last_set_mode, dev);
 
@@ -710,18 +714,20 @@ int8_t bme280_set_sensor_mode(uint8_t sensor_mode, struct bme280_dev *dev)
 static int8_t bme280_get_sensor_mode(uint8_t *sensor_mode, struct bme280_dev *dev)
 {
     int8_t rslt;
+    uint8_t reg_data = 0; // Use seperate variable for register read
 
-    if (sensor_mode != NULL)
-    {
-        /* Read the power mode register */
-        rslt = bme280_get_regs(BME280_REG_PWR_CTRL, sensor_mode, 1, dev);
-
-        /* Assign the power mode to variable */
-        *sensor_mode = BME280_GET_BITS_POS_0(*sensor_mode, BME280_SENSOR_MODE);
+    if ((sensor_mode == NULL) || (dev == NULL)){
+      return BME280_E_NULL_PTR;
     }
-    else
-    {
-        rslt = BME280_E_NULL_PTR;
+
+    *sensor_mode = 0; // Initialise output parameter immediately
+    
+    /* Read the power mode register */
+    rslt = bme280_get_regs(BME280_REG_PWR_CTRL, sensor_mode, 1, dev);
+    
+    if(rslt == BME280_OK){
+      /* Assign the power mode to variable */
+      *sensor_mode = BME280_GET_BITS_POS_0(reg_data, BME280_SENSOR_MODE);
     }
 
     return rslt;
@@ -737,6 +743,13 @@ static int8_t bme280_soft_reset(struct bme280_dev *dev)
     uint8_t reg_addr = BME280_REG_RESET;
     uint8_t status_reg = 0;
     //uint8_t try_run = 5;
+    if(dev == NULL) {
+      return BME280_E_NULL_PTR;
+    }
+
+    if(dev->delay_us == NULL){
+      return BME280_E_NULL_PTR;
+    }
 
     /* 0xB6 is the soft reset command */
     uint8_t soft_rst_cmd = BME280_SOFT_RESET_COMMAND;
@@ -746,18 +759,35 @@ static int8_t bme280_soft_reset(struct bme280_dev *dev)
 
     if (rslt == BME280_OK)
     {
-        uint8_t try_run = 5;
+        uint8_t try_count = 0;
+        const uint8_t max_tries = 5;
+        uint8_t nvm_copy_complete = 0; 
+        //uint8_t try_run = 5;
         /* If NVM not copied yet, Wait for NVM to copy */
         do
         {
             /* As per data sheet - Table 1, startup time is 2 ms. */
             // cppcheck-suppress syntaxError
             dev->delay_us(BME280_STARTUP_DELAY, dev->intf_ptr);
+
+            void (*delay_func)(uint32_t, void*) = dev->delay_us;
+            delay_func(BME280_STARTUP_DELAY, dev->intf_ptr);
+
             rslt = bme280_get_regs(BME280_REG_STATUS, &status_reg, 1, dev);
 
-        } while ((rslt == BME280_OK) && (try_run--) && (status_reg & BME280_STATUS_IM_UPDATE));
+            if (rslt != BME280_OK)
+              break; // Exit on error
+            
+            // Check if NVM copy is complete
+            if(!(status_reg & BME280_STATUS_IM_UPDATE)){
+              nvm_copy_complete = 1;
+              break;
+            }
+            
+            try_count++;
+        } while (try_count < max_tries);
 
-        if (status_reg & BME280_STATUS_IM_UPDATE)
+        if ((rslt == BME280_OK) && !nvm_copy_complete)
         {
             rslt = BME280_E_NVM_COPY_FAILED;
         }
