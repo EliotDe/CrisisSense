@@ -1,3 +1,11 @@
+/**
+ * @brief GPIO driver for stm32l432
+ * 
+ * @todo Allow for configuration of multiple pins on one Peripheral
+ * This would be useful for configuring GPIO for say SPI with pins MOSI, MISO, NSS, SCK
+ */
+
+
 #include "stm32l432xx.h"
 #include "gpio_driver.h"
 

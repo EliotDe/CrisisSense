@@ -90,50 +90,50 @@ int8_t bme280_init(struct bme280_dev *dev);
  * @brief Generic API for accessing sensor registers
  */
 
-/*!
- * \ingroup bme280ApiRegister
- * \page bme280_api_bme280_set_regs bme280_set_regs
- * \code
- * int8_t bme280_set_regs(const uint8_t reg_addr, const uint8_t *reg_data, uint32_t len, struct bme280_dev *dev);
- * \endcode
- * @details This API writes the given data to the register address of the sensor
- *
- * @param[in] reg_addr : Register addresses to where the data is to be written
- * @param[in] reg_data : Pointer to data buffer which is to be written
- *                       in the reg_addr of sensor.
- * @param[in] len      : No of bytes of data to write
- * @param[in,out] dev  : Structure instance of bme280_dev
- *
- * @return Result of API execution status.
- *
- * @retval   0 -> Success.
- * @retval > 0 -> Warning.
- * @retval < 0 -> Fail.
- *
- */
-//int8_t bme280_set_regs(uint8_t *reg_addr, const uint8_t *reg_data, uint32_t len, struct bme280_dev *dev);   --> UNCOMMENT THIS LATER!
+// /*!
+//  * \ingroup bme280ApiRegister
+//  * \page bme280_api_bme280_set_regs bme280_set_regs
+//  * \code
+//  * int8_t bme280_set_regs(const uint8_t reg_addr, const uint8_t *reg_data, uint32_t len, struct bme280_dev *dev);
+//  * \endcode
+//  * @details This API writes the given data to the register address of the sensor
+//  *
+//  * @param[in] reg_addr : Register addresses to where the data is to be written
+//  * @param[in] reg_data : Pointer to data buffer which is to be written
+//  *                       in the reg_addr of sensor.
+//  * @param[in] len      : No of bytes of data to write
+//  * @param[in,out] dev  : Structure instance of bme280_dev
+//  *
+//  * @return Result of API execution status.
+//  *
+//  * @retval   0 -> Success.
+//  * @retval > 0 -> Warning.
+//  * @retval < 0 -> Fail.
+//  *
+//  */
+// int8_t bme280_set_regs(uint8_t *reg_addr, const uint8_t *reg_data, uint32_t len, struct bme280_dev *dev);
 
-/*!
- * \ingroup bme280ApiRegister
- * \page bme280_api_bme280_get_regs bme280_get_regs
- * \code
- * int8_t bme280_get_regs(uint8_t reg_addr, uint8_t *reg_data, uint32_t len, struct bme280_dev *dev);
- * \endcode
- * @details This API reads the data from the given register address of sensor.
- *
- * @param[in] reg_addr  : Register address from where the data to be read
- * @param[out] reg_data : Pointer to data buffer to store the read data.
- * @param[in] len       : No of bytes of data to be read.
- * @param[in,out] dev   : Structure instance of bme280_dev.
- *
- * @return Result of API execution status.
- *
- * @retval   0 -> Success.
- * @retval > 0 -> Warning.
- * @retval < 0 -> Fail.
- *
- */
-//int8_t bme280_get_regs(uint8_t reg_addr, uint8_t *reg_data, uint32_t len, struct bme280_dev *dev);    --> UNCOMMENT THIS LATER!
+// /*!
+//  * \ingroup bme280ApiRegister
+//  * \page bme280_api_bme280_get_regs bme280_get_regs
+//  * \code
+//  * int8_t bme280_get_regs(uint8_t reg_addr, uint8_t *reg_data, uint32_t len, struct bme280_dev *dev);
+//  * \endcode
+//  * @details This API reads the data from the given register address of sensor.
+//  *
+//  * @param[in] reg_addr  : Register address from where the data to be read
+//  * @param[out] reg_data : Pointer to data buffer to store the read data.
+//  * @param[in] len       : No of bytes of data to be read.
+//  * @param[in,out] dev   : Structure instance of bme280_dev.
+//  *
+//  * @return Result of API execution status.
+//  *
+//  * @retval   0 -> Success.
+//  * @retval > 0 -> Warning.
+//  * @retval < 0 -> Fail.
+//  *
+//  */
+// int8_t bme280_get_regs(uint8_t reg_addr, uint8_t *reg_data, uint32_t len, struct bme280_dev *dev); 
 
 /**
  * \ingroup bme280
@@ -235,33 +235,33 @@ int8_t bme280_get_sensor_settings(struct bme280_settings *settings, struct bme28
  */
 int8_t bme280_set_sensor_mode(uint8_t sensor_mode, struct bme280_dev *dev);
 
-/*!
- * \ingroup bme280ApiSensorMode
- * \page bme280_api_bme280_get_sensor_mode bme280_get_sensor_mode
- * \code
- * int8_t bme280_get_sensor_mode(uint8_t *sensor_mode, struct bme280_dev *dev);
- * \endcode
- * @details This API gets the power mode of the sensor.
- *
- * @param[out] sensor_mode : Pointer variable to store the power mode.
- * @param[in] dev          : Structure instance of bme280_dev.
- *
- *@verbatim
- *    sensor_mode       |      Macros
- * ---------------------|-------------------------
- *     0                | BME280_POWERMODE_SLEEP
- *     1                | BME280_POWERMODE_FORCED
- *     3                | BME280_POWERMODE_NORMAL
- *@endverbatim
- *
- * @return Result of API execution status
- *
- * @retval   0 -> Success.
- * @retval > 0 -> Warning.
- * @retval < 0 -> Fail.
- *
- */
-//int8_t bme280_get_sensor_mode(uint8_t *sensor_mode, struct bme280_dev *dev);    --> UNCOMMENT THIS LATER!
+// /*!
+//  * \ingroup bme280ApiSensorMode
+//  * \page bme280_api_bme280_get_sensor_mode bme280_get_sensor_mode
+//  * \code
+//  * int8_t bme280_get_sensor_mode(uint8_t *sensor_mode, struct bme280_dev *dev);
+//  * \endcode
+//  * @details This API gets the power mode of the sensor.
+//  *
+//  * @param[out] sensor_mode : Pointer variable to store the power mode.
+//  * @param[in] dev          : Structure instance of bme280_dev.
+//  *
+//  *@verbatim
+//  *    sensor_mode       |      Macros
+//  * ---------------------|-------------------------
+//  *     0                | BME280_POWERMODE_SLEEP
+//  *     1                | BME280_POWERMODE_FORCED
+//  *     3                | BME280_POWERMODE_NORMAL
+//  *@endverbatim
+//  *
+//  * @return Result of API execution status
+//  *
+//  * @retval   0 -> Success.
+//  * @retval > 0 -> Warning.
+//  * @retval < 0 -> Fail.
+//  *
+//  */
+// int8_t bme280_get_sensor_mode(uint8_t *sensor_mode, struct bme280_dev *dev);
 
 /**
  * \ingroup bme280
@@ -269,24 +269,24 @@ int8_t bme280_set_sensor_mode(uint8_t sensor_mode, struct bme280_dev *dev);
  * @brief API that performs system-level operations
  */
 
-/*!
- * \ingroup bme280ApiSystem
- * \page bme280_api_bme280_soft_reset bme280_soft_reset
- * \code
- * int8_t bme280_soft_reset(struct bme280_dev *dev);
- * \endcode
- * @details This API soft-resets the sensor.
- *
- * @param[in,out] dev : Structure instance of bme280_dev.
- *
- * @return Result of API execution status.
- *
- * @retval   0 -> Success.
- * @retval > 0 -> Warning.
- * @retval < 0 -> Fail.
- *
- */
-//int8_t bme280_soft_reset(struct bme280_dev *dev);   --> UNCOMMENT THIS LATER!
+// /*!
+//  * \ingroup bme280ApiSystem
+//  * \page bme280_api_bme280_soft_reset bme280_soft_reset
+//  * \code
+//  * int8_t bme280_soft_reset(struct bme280_dev *dev);
+//  * \endcode
+//  * @details This API soft-resets the sensor.
+//  *
+//  * @param[in,out] dev : Structure instance of bme280_dev.
+//  *
+//  * @return Result of API execution status.
+//  *
+//  * @retval   0 -> Success.
+//  * @retval > 0 -> Warning.
+//  * @retval < 0 -> Fail.
+//  *
+//  */
+// int8_t bme280_soft_reset(struct bme280_dev *dev);
 
 /**
  * \ingroup bme280
@@ -328,38 +328,38 @@ int8_t bme280_set_sensor_mode(uint8_t sensor_mode, struct bme280_dev *dev);
  */
 int8_t bme280_get_sensor_data(uint8_t sensor_comp, struct bme280_data *comp_data, struct bme280_dev *dev);
 
-/*!
- * \ingroup bme280ApiSensorData
- * \page bme280_api_bme280_compensate_data bme280_compensate_data
- * \code
- * int8_t bme280_compensate_data(uint8_t sensor_comp,
- *                             const struct bme280_uncomp_data *uncomp_data,
- *                             struct bme280_data *comp_data,
- *                             struct bme280_calib_data *calib_data);
- * \endcode
- * @details This API is used to compensate the pressure and/or
- * temperature and/or humidity data according to the component selected by the
- * user.
- *
- * @param[in] sensor_comp : Used to select pressure and/or temperature and/or
- *                          humidity.
- * @param[in] uncomp_data : Contains the uncompensated pressure, temperature and
- *                          humidity data.
- * @param[out] comp_data  : Contains the compensated pressure and/or temperature
- *                          and/or humidity data.
- * @param[in] calib_data  : Pointer to bme280_calib_data
- *
- * @return Result of API execution status.
- *
- * @retval   0 -> Success.
- * @retval > 0 -> Warning.
- * @retval < 0 -> Fail.
- *
- */
-/*int8_t bme280_compensate_data(uint8_t sensor_comp,
-                              const struct bme280_uncomp_data *uncomp_data,
-                              struct bme280_data *comp_data,
-                              struct bme280_calib_data *calib_data);*/       // --> UNCOMMENT THIS LATER!
+// /*!
+//  * \ingroup bme280ApiSensorData
+//  * \page bme280_api_bme280_compensate_data bme280_compensate_data
+//  * \code
+//  * int8_t bme280_compensate_data(uint8_t sensor_comp,
+//  *                             const struct bme280_uncomp_data *uncomp_data,
+//  *                             struct bme280_data *comp_data,
+//  *                             struct bme280_calib_data *calib_data);
+//  * \endcode
+//  * @details This API is used to compensate the pressure and/or
+//  * temperature and/or humidity data according to the component selected by the
+//  * user.
+//  *
+//  * @param[in] sensor_comp : Used to select pressure and/or temperature and/or
+//  *                          humidity.
+//  * @param[in] uncomp_data : Contains the uncompensated pressure, temperature and
+//  *                          humidity data.
+//  * @param[out] comp_data  : Contains the compensated pressure and/or temperature
+//  *                          and/or humidity data.
+//  * @param[in] calib_data  : Pointer to bme280_calib_data
+//  *
+//  * @return Result of API execution status.
+//  *
+//  * @retval   0 -> Success.
+//  * @retval > 0 -> Warning.
+//  * @retval < 0 -> Fail.
+//  *
+//  */
+// int8_t bme280_compensate_data(uint8_t sensor_comp,
+//                               const struct bme280_uncomp_data *uncomp_data,
+//                               struct bme280_data *comp_data,
+//                               struct bme280_calib_data *calib_data);       
 
 /**
  * \ingroup bme280

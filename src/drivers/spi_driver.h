@@ -252,6 +252,8 @@ typedef struct{
 int8_t spi_config(SPI_TypeDef* spi_line, const spi_config_t* cfg);
 int8_t spi_enable(SPI_TypeDef* spi_line);
 int8_t spi_disable(SPI_TypeDef* spi_line, spi_rxonly_t rxonly);
+int8_t spi_disable_dmatxen(SPI_TypeDef* spi_line);
+int8_t spi_disable_dmarxen(SPI_TypeDef* spi_line);
 int8_t spi_disable_nonblocking(SPI_TypeDef* spi_line, uint8_t rxonly);
 int8_t spi_is_enabled(const SPI_TypeDef* spi_line);
 int8_t spi_assert_nss(SPI_TypeDef* spi_line);
@@ -261,6 +263,23 @@ int8_t spi_assert_nss(SPI_TypeDef* spi_line);
 int8_t spi_transmit_polling(SPI_TypeDef* spi_line, const spi_data_packet_t* data_packet);
 int8_t spi_transfer_interrupts(SPI_TypeDef* spi_line, const spi_data_packet_t* data_packet);
 int8_t spi_set_dmatxen(SPI_TypeDef* spi_line, uint8_t en);
+
+/**
+ * @brief This is a blocking function that transmits data and receives it on a loop
+ * @param[in] spi_line The SPI peripheral to transfer data on
+ * @param[in] tx_buffer The Data to transmit
+ * @param[out] rx_buffer  The Data Received From the transfer
+ * @param[in] length The length of the transfer
+ * @param[in] data_size The Size of each data (4-bits to 16-bits)
+ * 
+ * @retval 0 Transfer Succesful
+ * @retval <0 An Error Occured
+ */
+int8_t spi_transfer_polling(SPI_TypeDef* spi_line,
+                            const void* tx_buffer,
+                            void* rx_buffer,
+                            uint32_t length,
+                            uint8_t data_size);
 
 /*============== RECEIVE FUNCTIONS =================*/
 
@@ -293,4 +312,4 @@ static inline int8_t write_bits(volatile uint32_t* reg, uint32_t  mask, uint32_t
 }
 
 
-#endif
+#endif 

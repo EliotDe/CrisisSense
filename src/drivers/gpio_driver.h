@@ -56,10 +56,10 @@ typedef enum{
 typedef struct{
   GPIO_TypeDef* gpio_peripheral;
   uint8_t gpio_pin;
-  gpio_moder_t mode;
-  gpio_otyper_t output_type;
-  gpio_pupdr_t pupdr_config;
-  gpio_ospeedr_t output_speed;
+  uint32_t mode;
+  uint32_t output_type;
+  uint32_t pupdr_config;
+  uint32_t output_speed;
   uint8_t alternate_function_code;
 }gpio_config_t;
 

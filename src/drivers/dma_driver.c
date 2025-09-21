@@ -138,4 +138,31 @@ static uint8_t dma_set_channel_request(const DMA_TypeDef* dma_line, uint8_t chan
   return 1;
 }
 
+
+uint8_t dma_disable_channel(DMA_Channel_TypeDef* channel, dma_err_t* error){
+  if(!channel){
+    if (error) *error = DMA_ERR_INVALID_PARAM;
+    return 0;
+  }
+
+  //Placeholder
+  channel->CCR &= ~DMA_CCR_EN;
+
+  return 1;
+}
+
+// void DMAx_IRQHandler(DMA_TypeDef* dma_line){
+//   if (dma_line->ISR & DMA_ISR_TCIF2){ // for DMA1  - SPI1_RX, DMA2 - SPI3_TX
+
+//   }
+//   else if 
+// }
+
+// void DMA1_IRQHandler(void){
+//   DMAx_IRQHandler(DMA1);
+// }
+
+// void DMA2_IRQHandler(void){
+//   DMAx_IRQHandler(DMA2);
+// }
 // Maybe an ISR that handles errors?

@@ -373,6 +373,22 @@ int8_t spi_disable_nonblocking(SPI_TypeDef* spi_line, uint8_t rxonly){
   return SPI_OK;
 }
 
+int8_t spi_disable_dmatxen(SPI_TypeDef* spi_line){
+  if(!spi_line) return SPI_ERR_INVALID_PARAM;
+
+  spi_line->CR2 &= ~SPI_CR2_TXDMAEN;
+
+  return SPI_OK;
+}
+
+int8_t spi_disable_dmarxen(SPI_TypeDef* spi_line){
+  if(!spi_line) return SPI_ERR_INVALID_PARAM;
+
+  spi_line->CR2 &= ~SPI_CR2_RXDMAEN;
+  
+  return SPI_OK;
+}
+
 // int8_t spi_on_dma_done(SPI_TypeDef* spi_line){
 //   // If DMA has signalled TC - 
 // }
@@ -417,6 +433,7 @@ int8_t spi_assert_nss(SPI_TypeDef* spi_line){
   // If IRQs were previously enabled, enable
   if(!primask)
     __enable_irq();
+
 
   return SPI_OK;
 }
@@ -474,15 +491,7 @@ int8_t spi_transmit_polling(SPI_TypeDef* spi_line, const spi_data_packet_t* data
     }
   }
 
-  // Wait for TXE = 1 & BSY = 0 before returning
   uint32_t timeout = SPI_TXE_TIMEOUT;
-  while(!(spi_line->SR & SPI_SR_TXE)){
-    if(--timeout == 0){
-      return SPI_ERR_TIMEOUT;
-    }
-  }
-
-  timeout = SPI_TXE_TIMEOUT;
   while(spi_line->SR & SPI_SR_BSY){
     if(--timeout == 0){
       return SPI_ERR_TIMEOUT;
@@ -537,6 +546,71 @@ int8_t spi_set_dmatxen(SPI_TypeDef* spi_line, uint8_t en){
 
   return SPI_OK;
 }
+
+
+/**
+ * @brief This is a blocking function that transmits and receives
+ */
+int8_t spi_transfer_polling(SPI_TypeDef* spi_line,
+                            const void* tx_buffer,
+                            void* rx_buffer,
+                            uint32_t length,
+                            uint8_t data_size) {
+    if (!spi_line || !tx_buffer || !rx_buffer) return SPI_ERR_INVALID_PARAM;
+
+    if(data_size < SPI_DATA_SIZE_MIN ||
+       data_size > SPI_DATA_SIZE_MAX)
+       return SPI_ERR_INVALID_PARAM;
+
+    // Ensure SPI is enabled
+    if (!(spi_line->CR1 & SPI_CR1_SPE)) {
+      spi_line->CR1 |= SPI_CR1_SPE;
+      __DSB();
+    }
+
+    for (uint32_t i = 0; i < length; i++) {
+        // Wait until TX buffer empty
+      uint32_t timeout = SPI_TXE_TIMEOUT;
+      while (!(spi_line->SR & SPI_SR_TXE)) {
+          if (--timeout == 0) return SPI_ERR_TIMEOUT;
+      }
+
+      // Write next byte
+      if(data_size <= SPI_DATA_SIZE_CHAR){
+        const uint8_t* char_buffer = (uint8_t*)tx_buffer;
+        spi_line->DR = char_buffer[i];
+      }
+      else{
+        const uint16_t* short_buffer = (uint16_t*)tx_buffer;
+        spi_line->DR = short_buffer[i];
+      }
+
+      // Wait until RX buffer has data
+      timeout = SPI_RXNE_TIMEOUT;
+      while (!(spi_line->SR & SPI_SR_RXNE)) {
+          if (--timeout == 0) return SPI_ERR_TIMEOUT;
+      }
+
+      // Read received byte
+      if(data_size <= SPI_DATA_SIZE_CHAR){
+        uint8_t* char_buffer = (uint8_t*)rx_buffer;
+        char_buffer[i] = spi_line->DR;
+      }
+      else{
+        uint16_t* short_buffer = (uint16_t*)rx_buffer;
+        short_buffer[i] = spi_line->DR;
+      }
+    }
+
+    // Ensure last bit is shifted
+    uint32_t timeout = SPI_TXE_TIMEOUT;
+    while (spi_line->SR & SPI_SR_BSY) {
+        if (--timeout == 0) return SPI_ERR_TIMEOUT;
+    }
+
+    return SPI_OK;
+}
+
 
 /*=================== SPI RECEIVER FUNCTIONS ===================*/
 
