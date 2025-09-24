@@ -16,6 +16,9 @@
 #include "gpio_driver.h"
 #include "dma_driver.h"
 
+#define SENSOR_TEMP_SCALE 2u  // BME280_data -> temp = degrees celsius * 100
+#define SENSOR_HUM_SCALE 3u   // BME280_data -> humidity = %RH * 1000
+
 #define SPI_DMA_RX_EN  1
 #define SPI_DMA_TX_EN  1
 
@@ -59,6 +62,10 @@ static int8_t manager_gpio_pin_config(GPIO_TypeDef* gpio_port, uint8_t gpio_pin,
 
 static int8_t user_spi_read_blocking(uint8_t reg_addr, uint8_t* reg_data, uint32_t len, void* intf_ptr);
 static int8_t user_spi_write_blocking(uint8_t reg_addr, const uint8_t *reg_data, uint32_t len, void *intf_ptr);
+
+static uint8_t uint32_to_str(uint32_t num, char* buffer);
+static uint8_t scaled_to_str(uint32_t num, uint8_t scale, char* buffer);
+static int8_t sensor_data_to_str(const struct bme280_data* sensor_data, char* buffer);
 
 
 
@@ -197,7 +204,7 @@ static int8_t manager_gpio_config(void){
 
   //const uint8_t num_pins = sizeof(spi_gpios) / sizeof(spi_gpios[0]);
 
-  // This project is completely baremetal so I want to avoid calling stdlib function
+  // This project is completely baremetal so I want to avoid calling stdlib functions
   // This verision avoids memcpy calls - it's a little messier so i might end up writing a utils file and implementing my own memcpy
   GPIO_TypeDef* ports[] = {GPIOB, GPIOB, GPIOB, GPIOB};
   const uint8_t pins[] = {GPIOA_SPI_MOSI_PIN, GPIOA_SPI_MISO_PIN, GPIOA_SPI_SCK_PIN, GPIOA_SPI_NSS_PIN};
@@ -442,11 +449,15 @@ static int8_t user_spi_read_blocking(uint8_t reg_addr, uint8_t* reg_data, uint32
  * 
  * @retval Returns Sensor Data
  */
-int8_t manager_read_sensor_data(uint8_t compensate_sensor, struct bme280_data* sensor_data, struct bme280_dev* dev){
-  if(!sensor_data || !dev) return SENSOR_ERR_INVALID_PARAM;
+int8_t manager_read_sensor_data(uint8_t compensate_sensor, char* sensor_data_str){
+  // Initialise sensor data struct
+  struct bme280_data* bme280_thp = {(uint32_t)0};
 
-  int8_t retval = bme280_get_sensor_data(compensate_sensor, sensor_data, dev);
+  int8_t retval = bme280_get_sensor_data(compensate_sensor, bme280_thp, &bme280_dev_ctx);
   if (retval != BME280_OK) return retval;
+
+  retval =  sensor_data_to_str(bme280_thp, sensor_data_str);
+  if(retval != SENSOR_OK) return retval;
 
   return SENSOR_OK;
 }
@@ -491,5 +502,106 @@ int8_t manager_read_sensor_data(uint8_t compensate_sensor, struct bme280_data* s
 //   return SENSOR_OK;
 // }
 
+/*====================== SENSOR DATA FORMATTING ============================*/
 
+/** 
+ * @brief  Converts an unsigned integer to a string
+ * @param[in] num Integer to convert
+ * @param[in] scale Number of decimal places to scale
+ * @param[out] buffer The string
+ * 
+ * @retval The length of the string
+*/
+static uint8_t scaled_to_str(uint32_t num, uint8_t scale, char* buffer){
+  char tmp[16]; // max 10 digits + \0
+  uint8_t index = 0; 
 
+  do{
+    tmp[index++] = '0' + num % 10;    // ASCII representation
+    num /= 10;
+  }while (num > 0);
+
+  // Insert decimal point
+  uint8_t out_len = 0;
+  uint8_t digits_written = 0;
+  for(int8_t j = index-1; j >= 0; j--){
+    if(digits_written == scale)
+      buffer[out_len++] = '.';
+    
+    buffer[out_len++] = tmp[j];
+    digits_written++;
+  }
+
+  // If the inputted number was shorter than the scale prepend leading "0."
+  if(digits_written <= scale){
+    for(uint8_t k = scale-digits_written + 1; k > 0; k--){
+      buffer[out_len + k] = buffer[out_len + k - 1];
+    }
+    buffer[0] = '0';
+    buffer[1] = '.'; // If decimal point isn't added in the above loop
+    out_len += (scale - digits_written + 1);
+  }
+
+  buffer[out_len] = '\0';
+  return out_len;
+}
+
+/**
+ * @brief Converts an unsigned 32-bit integer to a string
+ * 
+ * @param[in] num The number to convert
+ * @param[out] buffer The string
+ * 
+ * @retval Size of the returned string
+ */
+static uint8_t uint32_to_str(uint32_t num, char* buffer){
+  char tmp[11];
+
+  int8_t index = 0;
+  do{
+    tmp[index++] = '0' + num % 10;
+    num /= 10;
+  }while(num > 0);
+
+  for(int8_t j = 0; j < index; j++){
+    buffer[j] = tmp[index - j - 1];
+  }
+
+  buffer[index] = '\0';
+
+  return index;
+}
+
+/**
+ * @brief Converts a bme280_data struct to a string
+ * @param[in] sensor_data BME280 struct containing sensor data
+ * @param[out] buffer Sensor Data String
+ * 
+ * @retval 0 - Successful
+ * @retval <0 - An error occured
+ */
+static int8_t sensor_data_to_str(const struct bme280_data* sensor_data, char* buffer){
+  if(!sensor_data) return SENSOR_ERR_INVALID_PARAM;
+
+  char* p = buffer;
+  uint8_t len;
+
+  // temperatrue - 
+  len = scaled_to_str(sensor_data->temperature, SENSOR_TEMP_SCALE, p);
+  p += len;
+  *p++ = '\n';
+
+  // humidity
+  len = scaled_to_str(sensor_data->humidity, SENSOR_HUM_SCALE, p);
+  p += len;
+  *p++ = '\n';
+
+  // pressure
+  len = uint32_to_str(sensor_data->pressure, p);
+  p += len;
+  *p++ = '\n';
+
+  *p = '\0';
+
+  return SENSOR_OK;
+}

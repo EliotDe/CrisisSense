@@ -1,19 +1,29 @@
 #include "stm32l432xx.h"
 #include "src/managers/debugging_manager.h"
+#include "src/managers/sensor_manager.h"
+#include "spi_driver.h"
+#include "dma_driver.h"
+#include "rcc_driver.h"
+#include "gpio_driver.h"
 
-#define LED_PIN 3
+#include <stdio.h>
+
+#define LED_PIN 3U
 #define LED_PORT GPIOB 
+
+#define COMPENSATE_SENSOR_DATA 1U
 
 static void LED_Init();
 
 void main(){
-  /*//\\ //\\ //\\ //\\ //\\ //\\ //\\ //\\ //\\ //\\*/
-  /*\\// \\// \\// \\// \\// \\// \\// \\// \\// \\//*/
-  /*//\\ //\\  Theres nothing here yet //\\ //\\ //\\ -- there is now*/
-  /*\\// \\// \\// \\// \\// \\// \\// \\// \\// \\//*/
-  /*//\\ //\\ //\\ //\\ //\\ //\\ //\\ //\\ //\\ //\\*/
-  const char* msg = "hello world!";
-  uint8_t manager_retval = Manager_Debug_DMA(msg); //Manager_Debug_Polling(msg);
+  uint8_t manager_retval;
+  manager_retval = manager_init();
+
+  
+  // Every five minutes:
+  char buffer[100];
+  manager_read_sensor_data(COMPENSATE_SENSOR_DATA, buffer);
+  Manager_Debug_Polling(buffer);
 
   if(manager_retval == 0){
     LED_Init();

@@ -67,7 +67,7 @@ typedef enum{
 /**
  * @brief Reads Sensor Data
  */
-int8_t manager_read_sensor_data(uint8_t compensate_sensor, struct bme280_data* sensor_data, struct bme280_dev* dev);
+int8_t manager_read_sensor_data(uint8_t compensate_sensor, char* sensor_data);
 
 int8_t manager_init();
 

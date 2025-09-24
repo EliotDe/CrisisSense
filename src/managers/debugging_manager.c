@@ -17,6 +17,7 @@
  */
 
 #include "debugging_manager.h"
+#include "bme280_defs.h"
 #include "usart_driver.h"
 #include "dma_driver.h"
 #include "rcc_driver.h"

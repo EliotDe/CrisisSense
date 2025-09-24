@@ -56,7 +56,7 @@ WFLAGS = -Wall -Wextra -Werror -Wshadow
 CFLAGS = -mcpu=cortex-m4 -mthumb -O2 -ffreestanding -g $(WFLAGS)
 CFLAGS += -DBME280_64BIT_ENABLE #Use 64-bit integers for sensor compensation in bme280
 CFLAGS += $(addprefix -I,$(INCLUDE_DIRS)) -I.
-LDFLAGS = -T $(LDSCRIPT) -nostdlib -lgcc -Wl,-Map=$(MAP)
+LDFLAGS = -T $(LDSCRIPT) -lgcc -Wl,-Map=$(MAP) -nostdlib 
 
 # Flags - Testing
 TEST_WFLAGS = -Wall -Wextra -std=c99
