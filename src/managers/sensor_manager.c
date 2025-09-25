@@ -451,12 +451,12 @@ static int8_t user_spi_read_blocking(uint8_t reg_addr, uint8_t* reg_data, uint32
  */
 int8_t manager_read_sensor_data(uint8_t compensate_sensor, char* sensor_data_str){
   // Initialise sensor data struct
-  struct bme280_data* bme280_thp = {(uint32_t)0};
+  struct bme280_data bme280_thp = {(uint32_t)0};
 
-  int8_t retval = bme280_get_sensor_data(compensate_sensor, bme280_thp, &bme280_dev_ctx);
+  int8_t retval = bme280_get_sensor_data(compensate_sensor, &bme280_thp, &bme280_dev_ctx);
   if (retval != BME280_OK) return retval;
 
-  retval =  sensor_data_to_str(bme280_thp, sensor_data_str);
+  retval =  sensor_data_to_str(&bme280_thp, sensor_data_str);
   if(retval != SENSOR_OK) return retval;
 
   return SENSOR_OK;
