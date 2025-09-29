@@ -68,6 +68,7 @@ static uint8_t scaled_to_str(uint32_t num, uint8_t scale, char* buffer);
 static int8_t sensor_data_to_str(const struct bme280_data* sensor_data, char* buffer);
 
 
+static inline void user_delay_us(uint32_t period, void* intf_ptr);
 
 
 /*========================= SENSOR CONFIG FUNCTIONS =============================*/
@@ -282,7 +283,7 @@ static int8_t manager_bme280_config(void){
   bme280_dev_ctx.intf_rslt = (BME280_INTF_RET_TYPE)0U;
   bme280_dev_ctx.read = &user_spi_read_blocking;
   bme280_dev_ctx.write = &user_spi_write_blocking;
-  //.delay_us =
+  bme280_dev_ctx.delay_us = &user_delay_us;
   //.calib_data = 
 
   retval = bme280_init(&bme280_dev_ctx);
@@ -384,6 +385,43 @@ static int8_t manager_bme280_config(void){
 
 //   return SENSOR_OK;
 // }
+
+/**
+ * @brief this function configures DWT for delay
+ * 
+ * @note References the ARM v7-M Architecture Reference Manual: C1.8 
+ * @retval 0 - Initiation Successful
+ **/
+static inline int8_t dwt_init(){
+  // Enable TRC - enable tracing 
+  CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+  // Unlock DWT?
+  // Reset the cycle counter
+  DWT->CYCCNT = 0;
+  // Enable CYCCNT in DWT->CTRL register
+  DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+
+  return SENSOR_OK;
+}
+
+/**
+ *@brief This wrapper function delays for a given period, measured in micro-seconds
+ *@param period This is the number of microseconds do delay for
+ *@param intf_ptr Pointer to a peripheral if needed
+ **/
+static inline void user_delay_us(uint32_t period, void* intf_ptr){
+  (void)intf_ptr;
+
+  // Use ARMs DWT->CYCCNT register, defined in core_cm4.h 
+  uint32_t cycles_per_us = SystemCoreClock / 1000000; // MHz = 1,000,000 Hz
+  uint32_t start = DWT->CYCCNT;
+  uint32_t delay_cycles =  period * cycles_per_us;
+
+  while((DWT->CYCCNT - start) < delay_cycles){
+    __NOP();
+  }
+}
+
 
 /**
  * @brief Writes data to a given register address - blocking
