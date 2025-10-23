@@ -1,4 +1,4 @@
 # CrisisSense
-My bare-metal embedded capstone project for the summer. Using a low-power stm32 (STM32L4), a LoRa communication module and a BME280 environmental sensor. Designed to be generic and expandable yet effective.
+Using a low-power stm32 (STM32L4), a LoRa communication module and a BME280 environmental sensor, I am making a low power environmental sensor and expanding to the LoRaWAN.
 
-Test commit for CI
+**This project is currently on pause due to poor soldering and a lora module with the wrong frequency.**
