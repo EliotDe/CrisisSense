@@ -1,0 +1,42 @@
+# === Build artifacts === 
+build/
+*.o
+*.elf
+*.bin
+*.map
+*.hex
+
+
+# === Version Control ===
+.git
+.gitignore
+
+# === IDE/editor junk
+.vscode/
+.idea/
+*.swp
+*.swo
+*.tmp
+*~
+
+# === OS junk ===
+.DS_Store
+Thumbs.db
+
+# === Docker + CI artifacts ===
+.dockerignore
+.github/
+
+# === Local configs or secrets
+.env
+*.log
+
+# === Unity ===
+unity/
+unity/*
+
+# === Debug files ===
+*.lst
+*.d
+*.su
+*.dep
