@@ -1,4 +1,12 @@
 # CrisisSense
-My bare-metal embedded capstone project for the summer. Using a low-power stm32 (STM32L4), a LoRa communication module and a BME280 environmental sensor. Designed to be generic and expandable yet effective.
+A low-power embedded sensor. Currently working on the feature/sensor branch.
 
-Test commit for CI
+Progress so far:
+- UART debugging: Simple terminal debugging over USART.
+- Sensor Integration: SPI driver written and BME280 api integrated. Soldering issues and school have delayed progress.
+
+Future Steps:
+- De-solder and re-solder 
+- Fully Test Sensor Integration
+- Sensor reading over UART demonstration
+- Start work on communication module
