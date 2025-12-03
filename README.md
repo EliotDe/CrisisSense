@@ -1,5 +1,5 @@
 # CrisisSense
-A low-power embedded sensor. Currently working on the feature/sensor branch.
+A low-power embedded sensor. **Currently working on the `feature/sensor` branch.**
 
 Progress so far:
 - UART debugging: Simple terminal debugging over USART.
