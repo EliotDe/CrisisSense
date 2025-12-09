@@ -439,6 +439,30 @@ int8_t spi_assert_nss(SPI_TypeDef* spi_line){
 }
 
 
+/**
+ * @brief Did I have to write another function? No.
+ */
+int8_t spi_deassert_nss(SPI_TypeDef* spi_line){
+  if(!spi_line)
+    return SPI_ERR_INVALID_PARAM;
+
+  // Get Previous IRQ status, disable interrupts for the critical section
+  uint32_t primask = __get_PRIMASK();
+  __disable_irq();
+
+  if (!(spi_line->CR1 & SPI_CR1_SSM)) // If software NSS management is disabled - enable it
+    spi_line->CR1 |= SPI_CR1_SSM;
+
+  spi_line->CR1 |= SPI_CR1_SSI;
+
+  // If IRQs were previously enabled, enable
+  if(!primask)
+    __enable_irq();
+
+
+  return SPI_OK;
+}
+
 /*=================== SPI TRANSMITTER FUNCTIONS ===================*/
 
 /**
@@ -535,7 +559,7 @@ int8_t spi_transfer_interrupts(SPI_TypeDef* spi_line, const spi_data_packet_t* d
 /**
  * @brief Helper function to be used in conjunction with spi_transmit_dma & DMA functions in order to communicate via DMA
  * @param spi_line SPI peripheral to configure
- * @param en he bit to be set. Any value > 1 will be treated as 1. If 0 is passed, dmatxen will be cleared
+ * @param en the bit to be set. Any value > 1 will be treated as 1. If 0 is passed, dmatxen will be cleared
  * @retval an error code of form SPI_ERR_X, or SPI_OK if there is no error
  */
 int8_t spi_set_dmatxen(SPI_TypeDef* spi_line, uint8_t en){

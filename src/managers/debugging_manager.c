@@ -29,9 +29,6 @@
 #define USART2_TX_REQUEST_CODE 2u
 
 static uint8_t Manager_DMA_Config(const char* mem_address, size_t length_of_transfer);
-static uint8_t Manager_USART_Config(usart_mode_t usart_mode);
-static uint8_t Manager_GPIO_Config(void);
-static uint8_t Manager_RCC_Config(void);
 static size_t strlen(const char* s);
 
 /*
@@ -49,12 +46,12 @@ uint8_t Manager_Debug_Polling(const char* debug_msg){
   if(!debug_msg){
     return 0;
   }
-  Manager_RCC_Config();
-  Manager_GPIO_Config();
-  uint8_t usart_config_retval = Manager_USART_Config(USART_MODE_POLLING);
-  if(!usart_config_retval){
-    return 0;
-  }
+  // Manager_RCC_Config();
+  // Manager_GPIO_Config();
+  // uint8_t usart_config_retval = Manager_USART_Config(USART_MODE_POLLING);
+  // if(!usart_config_retval){
+  //   return 0;
+  // }
 
   usart_dataPacket_t data_packet = {
     .buffer = debug_msg,
@@ -152,12 +149,12 @@ static uint8_t Manager_DMA_Config(const char* mem_address, size_t length_of_tran
   return 1;
 }
 
-static uint8_t Manager_USART_Config(usart_mode_t usart_mode){
+int8_t Manager_USART_Config(usart_mode_t usart_mode){
   usart_err_t usart_cfg_error = USART_OK;
   rcc_err_t rcc_error = RCC_OK;
   uint32_t pclk2_hz = rcc_get_pclk2_hz(&rcc_error);
   if (!pclk2_hz){
-    return 0;
+    return ERR_DEBUG_PCLK_NOT_RECEIVED;
   }
   if (usart_mode == USART_MODE_DMA){
     usart_config_t usart_cfg = {
@@ -199,7 +196,7 @@ static uint8_t Manager_USART_Config(usart_mode_t usart_mode){
   return 1;
 }
 
-static uint8_t Manager_GPIO_Config(void) {
+uint8_t Manager_GPIO_Config(void) {
   // Configure PA0 for USART_TX
   gpio_config_t cfg = {
     .gpio_peripheral = GPIOA,
@@ -219,7 +216,7 @@ static uint8_t Manager_GPIO_Config(void) {
   return 1;
 }
 
-static uint8_t Manager_RCC_Config(void) {
+uint8_t Manager_RCC_Config(void) {
   RCC->AHB2ENR |= RCC_AHB2ENR_GPIOAEN;    //GPIOA Clock
   RCC->APB1ENR1 |= RCC_APB1ENR1_USART2EN; //USART2 Clock
   RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;     //DMA1 Clock

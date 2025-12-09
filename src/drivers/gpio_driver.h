@@ -71,4 +71,19 @@ uint8_t gpio_config_pin(gpio_config_t* cfg, gpio_error_t* error);
 static inline void gpio_register_set_bit(uint32_t* reg, uint32_t bit){*reg |= bit;}
 static inline void gpio_register_clear_bit(uint32_t* reg, uint32_t bit){*reg &= ~bit;}
 
+/**
+ * @brief This uses the BSRR register to set or reset a pin
+ */ 
+static inline void gpio_set_pin(GPIO_TypeDef* port, uint8_t pin){
+  if (!port) return;
+  port->BSRR = 1 << pin;
+}
+
+static inline void gpio_reset_pin(GPIO_TypeDef* port, uint8_t pin){
+  if (!port) return;
+  port->BSRR = 1 << (16 + pin);
+}
+
+
+
 #endif

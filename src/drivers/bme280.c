@@ -731,6 +731,7 @@ static int8_t bme280_soft_reset(struct bme280_dev *dev)
         {
             /* As per data sheet - Table 1, startup time is 2 ms. */
             // cppcheck-suppress internalAstError
+            // cppcheck-suppress syntaxError
             dev->delay_us(BME280_STARTUP_DELAY, dev->intf_ptr);
 
             void (*delay_func)(uint32_t, void*) = dev->delay_us;

@@ -118,7 +118,7 @@ typedef enum{
  */
 typedef enum{
   SPI_SSM_DISABLED,           //SSM = 0: Software Slave Management is disabled
-  SPI_SSM_ENABLED             //SSM = 0: Software Slave Management is enabled
+  SPI_SSM_ENABLED             //SSM = 1: Software Slave Management is enabled
 }spi_ssm_enable_t;
 
 /**
@@ -257,6 +257,7 @@ int8_t spi_disable_dmarxen(SPI_TypeDef* spi_line);
 int8_t spi_disable_nonblocking(SPI_TypeDef* spi_line, uint8_t rxonly);
 int8_t spi_is_enabled(const SPI_TypeDef* spi_line);
 int8_t spi_assert_nss(SPI_TypeDef* spi_line);
+int8_t spi_deassert_nss(SPI_TypeDef* spi_line);
 
 /*============== TRANSMIT FUNCTIONS =================*/
 

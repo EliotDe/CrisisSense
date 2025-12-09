@@ -252,6 +252,8 @@ uint8_t usart_transmit(USART_TypeDef* usart_line, const usart_dataPacket_t* data
         }
     }
 
+    usart_line->CR1 &= ~USART_CR1_TE;
+
     return 1;
 }
 

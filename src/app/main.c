@@ -16,17 +16,38 @@
 static void LED_Init();
 
 void main(){
-  uint8_t manager_retval;
-  manager_retval = manager_init();
+  Manager_RCC_Config();
+  Manager_GPIO_Config();
+  uint8_t usart_config_retval = Manager_USART_Config(USART_MODE_POLLING);
 
+  if(!usart_config_retval){
+    LED_Init();
+    while(1);
+  }
+  Manager_Debug_Polling("Running...");
+  
+  
+  uint8_t manager_retval, read_retval, debug_retval;
+  Manager_Debug_Polling("\nConfiguring Manager");
+  
+  manager_retval = manager_init();
+  Manager_Debug_Polling(manager_retval ? "\nManager OK" : "\nMangager Failed");
   
   // Every five minutes:
+  Manager_Debug_Polling("\nReading Sensor");
   char buffer[100];
-  manager_read_sensor_data(COMPENSATE_SENSOR_DATA, buffer);
-  Manager_Debug_Polling(buffer);
+  for(uint8_t i = 0; i < 100; i++){
+    buffer[i] = 0;
+  }
+  read_retval = manager_read_sensor_data(COMPENSATE_SENSOR_DATA, buffer);
+  Manager_Debug_Polling(read_retval ? "\nSensor Read OK" : "\nSensor Read Failed");
 
-  if(manager_retval == 0){
-    LED_Init();
+  if (read_retval)
+    debug_retval = Manager_Debug_Polling(buffer);
+
+  if(manager_retval == 0 || read_retval == 0 || debug_retval == 0){
+    Manager_Debug_Polling("\nDebugging");
+    //LED_Init();
   }
 
   while(1);
