@@ -53,7 +53,7 @@ LDSCRIPT = stm32l432kc.ld
 # Flags
 MCU = stm32l432kc
 WFLAGS = -Wall -Wextra -Werror -Wshadow
-CFLAGS = -mcpu=cortex-m4 -mthumb -O2 -ffreestanding -g $(WFLAGS)
+CFLAGS = -mcpu=cortex-m4 -mthumb -O0 -ffreestanding -g $(WFLAGS)
 CFLAGS += -DBME280_64BIT_ENABLE #Use 64-bit integers for sensor compensation in bme280
 CFLAGS += $(addprefix -I,$(INCLUDE_DIRS)) -I.
 LDFLAGS = -T $(LDSCRIPT) -lgcc -Wl,-Map=$(MAP) -nostdlib 

@@ -586,6 +586,13 @@ int8_t spi_transfer_polling(SPI_TypeDef* spi_line,
        data_size > SPI_DATA_SIZE_MAX)
        return SPI_ERR_INVALID_PARAM;
 
+    
+       // Misalignment check
+    if (data_size > SPI_DATA_SIZE_CHAR) {
+      if (((uintptr_t)tx_buffer & 1) || ((uintptr_t)rx_buffer & 1)) 
+        return SPI_ERR_INVALID_PARAM;
+    }
+
     // Ensure SPI is enabled
     if (!(spi_line->CR1 & SPI_CR1_SPE)) {
       spi_line->CR1 |= SPI_CR1_SPE;
@@ -609,20 +616,39 @@ int8_t spi_transfer_polling(SPI_TypeDef* spi_line,
         spi_line->DR = short_buffer[i];
       }
 
+
+      // // Clock-Check -- REMOVE THIS
+      // //volatile uint32_t samples = 0;
+      // volatile uint32_t transitions = 0;
+
+      // uint32_t last = (GPIOA->IDR >> 5) & 1;
+
+      // for (uint32_t j = 0; j<100000; j++){
+      //   uint32_t now = (GPIOA->IDR >> 5) & 1;
+      //   if (now != last) transitions++;
+      //   last = now;
+      // }
+
+      // //samples = transitions;
+
       // Wait until RX buffer has data
       timeout = SPI_RXNE_TIMEOUT;
       while (!(spi_line->SR & SPI_SR_RXNE)) {
           if (--timeout == 0) return SPI_ERR_TIMEOUT;
       }
 
+      
+
       // Read received byte
       if(data_size <= SPI_DATA_SIZE_CHAR){
         uint8_t* char_buffer = (uint8_t*)rx_buffer;
         char_buffer[i] = spi_line->DR;
+        __DSB();
       }
       else{
         uint16_t* short_buffer = (uint16_t*)rx_buffer;
         short_buffer[i] = spi_line->DR;
+        __DSB();
       }
     }
 

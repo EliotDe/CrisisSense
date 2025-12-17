@@ -29,7 +29,7 @@
 
 #define GPIOA_SPI_MOSI_PIN 7U 
 #define GPIOA_SPI_MISO_PIN 6U 
-#define GPIOA_SPI_SCK_PIN 1U 
+#define GPIOA_SPI_SCK_PIN 5U 
 #define GPIOA_SPI_NSS_PIN 4U 
 
 #define GPIO_SPI1_AF_CODE 5U   //AF5
@@ -41,7 +41,7 @@
 
 #define SPI1_DMA_REQ_CODE 1U  // Code is the same for each SPI pin
  
-#define MAX_SPI_XFER 64
+#define MAX_SPI_XFER 31
 
 static struct bme280_dev bme280_dev_ctx;    // Struct Containing the BME280 configuration data
 static spi_config_t spi_cfg;            // Struct Containing the SPI peripheral configuration data
@@ -117,7 +117,7 @@ static int8_t manager_spi_config(SPI_TypeDef* spi_line){
   spi_cfg.clock_polarity = SPI_CLK_IDLE0;                 // Clock signal goes low when idle
   spi_cfg.data_size_in_bits = SPI_DATA_SIZE_CHAR;
   spi_cfg.enable_crc = SPI_CRC_DISABLED;                  // No Cyclic Redundancy Test
-  spi_cfg.fifo_rx_threshold = SPI_FIFO_LVL_HALF;          // RXNE generated whenever RXFIFO is half full
+  spi_cfg.fifo_rx_threshold = SPI_FIFO_LVL_QUARTER;          // RXNE generated whenever RXFIFO is quarter full
   spi_cfg.lsb_first = SPI_MSB_FIRST;                
   spi_cfg.master_selction = SPI_MASTER_CONFIG;            // Configure SPI as Master
   spi_cfg.nss_pulse = SPI_NO_NSS_PULSE;                   // Don't generate NSS pulses
@@ -141,8 +141,16 @@ static int8_t manager_rcc_config(void){
   // Consider configuring PLL for SPI communication
 
   RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
+  __DSB();
+  RCC->APB2RSTR |= RCC_APB2RSTR_SPI1RST;
+  __DSB();
+  RCC->APB2RSTR &= ~RCC_APB2RSTR_SPI1RST;
+  __DSB();
+  RCC->APB2SMENR |= RCC_APB2SMENR_SPI1SMEN;
+  __DSB();
   //RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;
   RCC->AHB2ENR |= RCC_AHB2ENR_GPIOAEN; 
+  __DSB();
 
   return SENSOR_OK;
 }
@@ -170,11 +178,11 @@ static int8_t manager_gpio_config(void){
   // This verision avoids memcpy calls - it's a little messier so i might end up writing a utils file and implementing my own memcpy
   static GPIO_TypeDef* ports[] = {GPIOA, GPIOA, GPIOA, GPIOA};
   static const uint8_t pins[] = {GPIOA_SPI_MOSI_PIN, GPIOA_SPI_MISO_PIN, GPIOA_SPI_SCK_PIN, GPIOA_SPI_NSS_PIN};
-  static gpio_moder_t modes[] = {GPIO_MODER_AF, GPIO_MODER_AF, GPIO_MODER_AF, GPIO_MODER_AF};
+  static gpio_moder_t modes[] = {GPIO_MODER_AF, GPIO_MODER_AF, GPIO_MODER_AF, GPIO_MODER_OUTPUT};
   static gpio_ospeedr_t speeds[] = {GPIO_OSPEEDR_VERY_HIGH, GPIO_OSPEEDR_VERY_HIGH, GPIO_OSPEEDR_VERY_HIGH, GPIO_OSPEEDR_MEDIUM};
   static gpio_otyper_t types[] = {GPIO_OTYPER_PUSH_PULL, GPIO_OTYPER_PUSH_PULL, GPIO_OTYPER_PUSH_PULL, GPIO_OTYPER_PUSH_PULL};
-  static gpio_pupdr_t pupdrs[] = {GPIO_PUPDR_NONE, GPIO_PUPDR_NONE, GPIO_PUPDR_NONE, GPIO_PUPDR_NONE};
-  uint8_t const af_codes[] = {GPIO_SPI1_AF_CODE, GPIO_SPI1_AF_CODE, GPIO_SPI1_AF_CODE, GPIO_SPI1_AF_CODE};
+  static gpio_pupdr_t pupdrs[] = {GPIO_PUPDR_NONE, GPIO_PUPDR_NONE, GPIO_PUPDR_NONE, GPIO_PUPDR_PULL_UP};
+  uint8_t const af_codes[] = {GPIO_SPI1_AF_CODE, GPIO_SPI1_AF_CODE, GPIO_SPI1_AF_CODE, 0/*GPIO_SPI1_AF_CODE*/};
 
 
 
@@ -328,7 +336,7 @@ static int8_t user_spi_write_blocking(uint8_t reg_addr, const uint8_t *reg_data,
 
   // Initialise Transfer Buffer
   if(len > MAX_SPI_XFER) return SPI_ERR_INVALID_PARAM;
-  uint8_t bme280_tx_buffer[len+1];
+  uint8_t bme280_tx_buffer[MAX_SPI_XFER+1];
   // Append the Register Address to the start
   bme280_tx_buffer[0] = reg_addr;
   // Fill the buffer with the rest of the data
@@ -362,16 +370,16 @@ static int8_t user_spi_read_blocking(uint8_t reg_addr, uint8_t* reg_data, uint32
   reg_addr |= 1 << 7U;
 
   if (len > MAX_SPI_XFER) return SENSOR_ERR_INVALID_PARAM;
-  uint8_t tx_buffer[len+1];
+  uint8_t tx_buffer[MAX_SPI_XFER+1];
   tx_buffer[0] = reg_addr;
 
   // Fill the tx_buffer with dummy bytes to clock out the transfer
-  for(uint32_t i = 0; i < len; i++){
+  for(uint32_t i = 0; i < MAX_SPI_XFER; i++){
     tx_buffer[i+1] = 0;
   }
 
   gpio_reset_pin(GPIOA, 4); // A4 is the NSS pin
-  uint8_t retval = spi_transfer_polling(spi_line, tx_buffer, reg_data, len+1, 8U);
+  uint8_t retval = spi_transfer_polling(spi_line, tx_buffer, reg_data, len+1, 8U); // should it be len+1 or MAX_SPI_XFER + 1 here?
   gpio_set_pin(GPIOA, 4);
   if(retval != SPI_OK){
     spi_disable(SPI1, SPI_FULL_DUPLEX);
