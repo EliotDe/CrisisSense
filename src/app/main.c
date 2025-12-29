@@ -71,7 +71,7 @@ static void LED_Init(){
   /* prevent undefined behaviour after return from main */
   while(1){
     LED_PORT -> ODR ^= (1 << LED_PIN);
-
-    for(volatile uint32_t i=0; i<100000; i++);
+    user_delay_us(1000000, SPI1);
+    //for(volatile uint32_t i=0; i<100000; i++);
   }
 }

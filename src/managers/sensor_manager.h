@@ -71,6 +71,8 @@ int8_t manager_read_sensor_data(uint8_t compensate_sensor, char* sensor_data);
 
 int8_t manager_init();
 
+int8_t dwt_init(void);
 
+void user_delay_us(uint32_t period, void* intf_ptr);
 
 #endif

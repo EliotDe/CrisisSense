@@ -322,11 +322,11 @@ static void parse_sensor_data(const uint8_t *reg_data, struct bme280_uncomp_data
 static int8_t reload_device_settings(const struct bme280_settings *settings, struct bme280_dev *dev);
 
 
-static int8_t bme280_get_regs(uint8_t reg_addr, uint8_t *reg_data, uint32_t len, struct bme280_dev *dev);
+//static int8_t bme280_get_regs(uint8_t reg_addr, uint8_t *reg_data, uint32_t len, struct bme280_dev *dev);
 
 static int8_t bme280_set_regs(uint8_t *reg_addr, const uint8_t *reg_data, uint32_t len, struct bme280_dev *dev);
 
-static int8_t bme280_get_sensor_mode(uint8_t *sensor_mode, struct bme280_dev *dev);
+//static int8_t bme280_get_sensor_mode(uint8_t *sensor_mode, struct bme280_dev *dev);
 
 static int8_t bme280_soft_reset(struct bme280_dev *dev);
 
@@ -434,6 +434,8 @@ int8_t bme280_init(struct bme280_dev *dev)
     // cppcheck-suppress syntaxError
     rslt = bme280_get_regs(BME280_REG_CHIP_ID, &chip_id, 1, dev);
 
+    //chip_id = 0x60; // REMOVE THIS!!!
+    
     /* Check for chip id validity */
     if (rslt == BME280_OK)
     {
@@ -462,7 +464,7 @@ int8_t bme280_init(struct bme280_dev *dev)
 /*!
  * @brief This API reads the data from the given register address of the sensor.
  */
-static int8_t bme280_get_regs(uint8_t reg_addr, uint8_t *reg_data, uint32_t len, struct bme280_dev *dev)
+int8_t bme280_get_regs(uint8_t reg_addr, uint8_t *reg_data, uint32_t len, struct bme280_dev *dev)
 {
     int8_t rslt;
 
@@ -675,7 +677,7 @@ int8_t bme280_set_sensor_mode(uint8_t sensor_mode, struct bme280_dev *dev)
 /*!
  * @brief This API gets the power mode of the sensor.
  */
-static int8_t bme280_get_sensor_mode(uint8_t *sensor_mode, struct bme280_dev *dev)
+int8_t bme280_get_sensor_mode(uint8_t *sensor_mode, struct bme280_dev *dev)
 {
     int8_t rslt;
 
@@ -689,9 +691,9 @@ static int8_t bme280_get_sensor_mode(uint8_t *sensor_mode, struct bme280_dev *de
     rslt = bme280_get_regs(BME280_REG_PWR_CTRL, sensor_mode, 1, dev);
     
     if(rslt == BME280_OK){
-      uint8_t reg_data = 0; // Use seperate variable for register read
+      //uint8_t reg_data = 0; // Use seperate variable for register read
       /* Assign the power mode to variable */
-      *sensor_mode = BME280_GET_BITS_POS_0(reg_data, BME280_SENSOR_MODE);
+      *sensor_mode = BME280_GET_BITS_POS_0(*sensor_mode, BME280_SENSOR_MODE);
     }
 
     return rslt;
@@ -1113,6 +1115,8 @@ static void parse_sensor_data(const uint8_t *reg_data, struct bme280_uncomp_data
  */
 static int8_t write_power_mode(uint8_t sensor_mode, struct bme280_dev *dev)
 {
+    uint8_t reg_data[BME280_LEN_P_T_H_DATA] = { 0 };
+
     int8_t rslt;
     uint8_t reg_addr = BME280_REG_PWR_CTRL;
 
@@ -1129,6 +1133,8 @@ static int8_t write_power_mode(uint8_t sensor_mode, struct bme280_dev *dev)
 
         /* Write the power mode in the register */
         rslt = bme280_set_regs(&reg_addr, &sensor_mode_reg_val, 1, dev);
+        dev->delay_us(2300, dev->intf_ptr);
+        rslt = bme280_get_regs(BME280_REG_DATA, reg_data, 8, dev);
     }
 
     return rslt;

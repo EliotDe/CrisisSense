@@ -208,7 +208,7 @@
 #define BME280_MEAS_DUR                           UINT16_C(2300)
 #define BME280_PRES_HUM_MEAS_OFFSET               UINT16_C(575)
 #define BME280_MEAS_SCALING_FACTOR                UINT16_C(1000)
-#define BME280_STARTUP_DELAY                      UINT16_C(2000)
+#define BME280_STARTUP_DELAY                      UINT16_C(2000) //change this
 
 /*! @name Length macros */
 #define BME280_MAX_LEN                            UINT8_C(10)

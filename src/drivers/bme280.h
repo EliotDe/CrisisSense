@@ -113,27 +113,27 @@ int8_t bme280_init(struct bme280_dev *dev);
 //  */
 // int8_t bme280_set_regs(uint8_t *reg_addr, const uint8_t *reg_data, uint32_t len, struct bme280_dev *dev);
 
-// /*!
-//  * \ingroup bme280ApiRegister
-//  * \page bme280_api_bme280_get_regs bme280_get_regs
-//  * \code
-//  * int8_t bme280_get_regs(uint8_t reg_addr, uint8_t *reg_data, uint32_t len, struct bme280_dev *dev);
-//  * \endcode
-//  * @details This API reads the data from the given register address of sensor.
-//  *
-//  * @param[in] reg_addr  : Register address from where the data to be read
-//  * @param[out] reg_data : Pointer to data buffer to store the read data.
-//  * @param[in] len       : No of bytes of data to be read.
-//  * @param[in,out] dev   : Structure instance of bme280_dev.
-//  *
-//  * @return Result of API execution status.
-//  *
-//  * @retval   0 -> Success.
-//  * @retval > 0 -> Warning.
-//  * @retval < 0 -> Fail.
-//  *
-//  */
-// int8_t bme280_get_regs(uint8_t reg_addr, uint8_t *reg_data, uint32_t len, struct bme280_dev *dev); 
+/*!
+ * \ingroup bme280ApiRegister
+ * \page bme280_api_bme280_get_regs bme280_get_regs
+ * \code
+ * int8_t bme280_get_regs(uint8_t reg_addr, uint8_t *reg_data, uint32_t len, struct bme280_dev *dev);
+ * \endcode
+ * @details This API reads the data from the given register address of sensor.
+ *
+ * @param[in] reg_addr  : Register address from where the data to be read
+ * @param[out] reg_data : Pointer to data buffer to store the read data.
+ * @param[in] len       : No of bytes of data to be read.
+ * @param[in,out] dev   : Structure instance of bme280_dev.
+ *
+ * @return Result of API execution status.
+ *
+ * @retval   0 -> Success.
+ * @retval > 0 -> Warning.
+ * @retval < 0 -> Fail.
+ *
+ */
+int8_t bme280_get_regs(uint8_t reg_addr, uint8_t *reg_data, uint32_t len, struct bme280_dev *dev); 
 
 /**
  * \ingroup bme280
@@ -235,33 +235,33 @@ int8_t bme280_get_sensor_settings(struct bme280_settings *settings, struct bme28
  */
 int8_t bme280_set_sensor_mode(uint8_t sensor_mode, struct bme280_dev *dev);
 
-// /*!
-//  * \ingroup bme280ApiSensorMode
-//  * \page bme280_api_bme280_get_sensor_mode bme280_get_sensor_mode
-//  * \code
-//  * int8_t bme280_get_sensor_mode(uint8_t *sensor_mode, struct bme280_dev *dev);
-//  * \endcode
-//  * @details This API gets the power mode of the sensor.
-//  *
-//  * @param[out] sensor_mode : Pointer variable to store the power mode.
-//  * @param[in] dev          : Structure instance of bme280_dev.
-//  *
-//  *@verbatim
-//  *    sensor_mode       |      Macros
-//  * ---------------------|-------------------------
-//  *     0                | BME280_POWERMODE_SLEEP
-//  *     1                | BME280_POWERMODE_FORCED
-//  *     3                | BME280_POWERMODE_NORMAL
-//  *@endverbatim
-//  *
-//  * @return Result of API execution status
-//  *
-//  * @retval   0 -> Success.
-//  * @retval > 0 -> Warning.
-//  * @retval < 0 -> Fail.
-//  *
-//  */
-// int8_t bme280_get_sensor_mode(uint8_t *sensor_mode, struct bme280_dev *dev);
+/*!
+ * \ingroup bme280ApiSensorMode
+ * \page bme280_api_bme280_get_sensor_mode bme280_get_sensor_mode
+ * \code
+ * int8_t bme280_get_sensor_mode(uint8_t *sensor_mode, struct bme280_dev *dev);
+ * \endcode
+ * @details This API gets the power mode of the sensor.
+ *
+ * @param[out] sensor_mode : Pointer variable to store the power mode.
+ * @param[in] dev          : Structure instance of bme280_dev.
+ *
+ *@verbatim
+ *    sensor_mode       |      Macros
+ * ---------------------|-------------------------
+ *     0                | BME280_POWERMODE_SLEEP
+ *     1                | BME280_POWERMODE_FORCED
+ *     3                | BME280_POWERMODE_NORMAL
+ *@endverbatim
+ *
+ * @return Result of API execution status
+ *
+ * @retval   0 -> Success.
+ * @retval > 0 -> Warning.
+ * @retval < 0 -> Fail.
+ *
+ */
+int8_t bme280_get_sensor_mode(uint8_t *sensor_mode, struct bme280_dev *dev);
 
 /**
  * \ingroup bme280

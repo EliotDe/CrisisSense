@@ -274,7 +274,7 @@ int8_t spi_disable(SPI_TypeDef* spi_line, spi_rxonly_t rxonly){
 
   uint32_t bsy_timeout = SPI_TXE_TIMEOUT;
 
-  volatile uint32_t rxfifo;
+  //volatile uint32_t rxfifo;
   if(rxonly != SPI_RECEIVE_ONLY){
     uint32_t ftlvl_timeout = SPI_TXE_TIMEOUT;
     // Wait until FTLVL = 0
@@ -300,8 +300,10 @@ int8_t spi_disable(SPI_TypeDef* spi_line, spi_rxonly_t rxonly){
     __ISB();
 
     // Read data until FRLVL[1:0] = 00 (read all the reveived data)
-    while(spi_line->SR & SPI_SR_FRLVL) 
-      rxfifo = spi_line->DR;
+    while(spi_line->SR & SPI_SR_FRLVL){
+      volatile uint8_t dummy = *(volatile uint8_t *)&spi_line->DR;
+      (void)dummy;
+    } 
   }
   else{ // rxonly mode 
     // TODO: Interrupt the receive flow by disabling SPI in the specific time window while the last data frame is ongoing
@@ -321,10 +323,10 @@ int8_t spi_disable(SPI_TypeDef* spi_line, spi_rxonly_t rxonly){
     __ISB();
 
     // Read data until FRLVL[1:0] = 00 (read all the reveived data)
-    while(spi_line->SR & SPI_SR_FRLVL) 
-      rxfifo = spi_line->DR;
-
-    (void)rxfifo;
+    while(spi_line->SR & SPI_SR_FRLVL) {
+      volatile uint8_t dummy = *(volatile uint8_t *)&spi_line->DR;
+      (void)dummy;
+    }
   }
 
   // If IRQs were previously enabled, enable
@@ -483,12 +485,11 @@ int8_t spi_transmit_polling(SPI_TypeDef* spi_line, const spi_data_packet_t* data
      data_packet->data_size < SPI_DATA_SIZE_MIN)
      return SPI_ERR_INVALID_PARAM;
 
-  if(spi_line->CR1 & SPI_CR1_SPE)
-    return SPI_ERR_BUSY;
-
   // Ensure SPI is enabled
-  spi_line->CR1 |= SPI_CR1_SPE;
-  __DSB();
+  if (!(spi_line->CR1 & SPI_CR1_SPE)) {
+    spi_line->CR1 |= SPI_CR1_SPE;
+    __DSB();
+  }
 
   // Transmit Data
   if(data_packet->data_size <= SPI_DATA_SIZE_CHAR){ // If the data size is <= 8-bits, represent as uint8_t
@@ -500,7 +501,17 @@ int8_t spi_transmit_polling(SPI_TypeDef* spi_line, const spi_data_packet_t* data
           return SPI_ERR_TIMEOUT;
         }
       }
-      spi_line->DR = data[i];
+      *(volatile uint8_t *)&spi_line->DR = data[i];
+      
+      // Clear received data
+      timeout = SPI_RXNE_TIMEOUT;
+      while(!(spi_line->SR & SPI_SR_RXNE)){
+        if(--timeout == 0)
+          return SPI_ERR_TIMEOUT;
+      }
+
+      volatile uint8_t dummy = *(volatile uint8_t *)&spi_line->DR;
+      (void)dummy;
     }
   }
   else{                                             // If the data size is > 8-bits, represent as uint16_t
@@ -512,6 +523,16 @@ int8_t spi_transmit_polling(SPI_TypeDef* spi_line, const spi_data_packet_t* data
           return SPI_ERR_TIMEOUT;
       }
       spi_line->DR = data[i];
+      
+      // Clear received data
+      timeout = SPI_RXNE_TIMEOUT;
+      while(!(spi_line->SR & SPI_SR_RXNE)){
+        if(--timeout == 0)
+          return SPI_ERR_TIMEOUT;
+      }
+
+      volatile uint16_t dummy = spi_line->DR;
+      (void)dummy;
     }
   }
 
@@ -609,7 +630,7 @@ int8_t spi_transfer_polling(SPI_TypeDef* spi_line,
       // Write next byte
       if(data_size <= SPI_DATA_SIZE_CHAR){
         const uint8_t* char_buffer = (uint8_t*)tx_buffer;
-        spi_line->DR = char_buffer[i];
+        *(volatile uint8_t *)&spi_line->DR = char_buffer[i];
       }
       else{
         const uint16_t* short_buffer = (uint16_t*)tx_buffer;
@@ -617,38 +638,42 @@ int8_t spi_transfer_polling(SPI_TypeDef* spi_line,
       }
 
 
-      // // Clock-Check -- REMOVE THIS
-      // //volatile uint32_t samples = 0;
-      // volatile uint32_t transitions = 0;
-
-      // uint32_t last = (GPIOA->IDR >> 5) & 1;
-
-      // for (uint32_t j = 0; j<100000; j++){
-      //   uint32_t now = (GPIOA->IDR >> 5) & 1;
-      //   if (now != last) transitions++;
-      //   last = now;
-      // }
-
-      // //samples = transitions;
-
       // Wait until RX buffer has data
       timeout = SPI_RXNE_TIMEOUT;
       while (!(spi_line->SR & SPI_SR_RXNE)) {
           if (--timeout == 0) return SPI_ERR_TIMEOUT;
-      }
-
-      
+      }      
 
       // Read received byte
       if(data_size <= SPI_DATA_SIZE_CHAR){
-        uint8_t* char_buffer = (uint8_t*)rx_buffer;
-        char_buffer[i] = spi_line->DR;
-        __DSB();
+        uint8_t rx = *(volatile uint8_t *)&spi_line->DR;
+        if (i > 0){
+          ((uint8_t *)rx_buffer)[i - 1] = rx;
+        }
+        // if (i == 0){
+        //   dummy_char = *(volatile uint8_t *)&spi_line->DR;
+        //   (void)dummy_char;
+        // }
+        // else{
+        //   uint8_t* char_buffer = (uint8_t*)rx_buffer;
+        //   char_buffer[i-1] = *(volatile uint8_t *)&spi_line->DR;
+        //   //__DSB();
+        // }
       }
       else{
-        uint16_t* short_buffer = (uint16_t*)rx_buffer;
-        short_buffer[i] = spi_line->DR;
-        __DSB();
+        uint16_t rx = spi_line->DR;
+        if (i > 0){
+          ((uint16_t *)rx_buffer)[i - 1] = rx;
+        }
+        // if (i == 0){
+        //   dummy_short = spi_line->DR;
+        //   (void)dummy_short;
+        // }
+        // else{
+        //   uint16_t* short_buffer = (uint16_t*)rx_buffer;
+        //   short_buffer[i-1] = spi_line->DR;
+        //   //__DSB();
+        // }
       }
     }
 

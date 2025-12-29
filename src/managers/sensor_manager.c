@@ -7,6 +7,7 @@
  */
 
 #include "src/managers/debugging_manager.h" // For Debugging
+#include "src/utils/utils.h"
 #include "stm32l432xx.h"
 #include "sensor_manager.h"
 #include "spi_driver.h"
@@ -60,7 +61,7 @@ static int8_t manager_gpio_config(void);
 static int8_t manager_gpio_pin_config(GPIO_TypeDef* gpio_port, uint8_t gpio_pin, gpio_moder_t mode, gpio_ospeedr_t output_speed,
                                       gpio_otyper_t output_type, gpio_pupdr_t pupdr, uint8_t af_code);
                               
-static inline int8_t dwt_init(void);
+// static inline int8_t dwt_init(void);
 
 static int8_t user_spi_read_blocking(uint8_t reg_addr, uint8_t* reg_data, uint32_t len, void* intf_ptr);
 static int8_t user_spi_write_blocking(uint8_t reg_addr, const uint8_t *reg_data, uint32_t len, void *intf_ptr);
@@ -70,7 +71,7 @@ static uint8_t scaled_to_str(uint32_t num, uint8_t scale, char* buffer);
 static int8_t sensor_data_to_str(const struct bme280_data* sensor_data, char* buffer);
 
 
-static inline void user_delay_us(uint32_t period, void* intf_ptr);
+// static inline void user_delay_us(uint32_t period, void* intf_ptr);
 
 
 /*========================= SENSOR CONFIG FUNCTIONS =============================*/
@@ -112,7 +113,7 @@ int8_t manager_init() {
 static int8_t manager_spi_config(SPI_TypeDef* spi_line){
   if(!spi_line) return SENSOR_ERR_INVALID_PARAM;
 
-  spi_cfg.baud_rate_factor = SPI_BAUD_DIV2;               // Maybe Put more thought into this decision
+  spi_cfg.baud_rate_factor = SPI_BAUD_DIV16;               // Maybe Put more thought into this decision
   spi_cfg.clock_phase = SPI_CLK_PHASE0;                   // First data capture edge is the first clock transition
   spi_cfg.clock_polarity = SPI_CLK_IDLE0;                 // Clock signal goes low when idle
   spi_cfg.data_size_in_bits = SPI_DATA_SIZE_CHAR;
@@ -282,6 +283,11 @@ static int8_t manager_bme280_config(void){
   retval = bme280_set_sensor_mode(BME280_POWERMODE_FORCED, &bme280_dev_ctx);
   if(retval != BME280_OK) return retval;
 
+  // uint8_t sensor_mode;
+  // retval = bme280_get_sensor_mode(&sensor_mode, &bme280_dev_ctx);
+  uint8_t status;
+  retval = bme280_get_regs(BME280_REG_STATUS, &status, 1, &bme280_dev_ctx);
+
   return SENSOR_OK;
 }
 
@@ -292,7 +298,7 @@ static int8_t manager_bme280_config(void){
  * @note References the ARM v7-M Architecture Reference Manual: C1.8 
  * @retval 0 - Initiation Successful
  **/
-static inline int8_t dwt_init(void){
+int8_t dwt_init(void){ //static inline 
   // Enable TRC - enable tracing 
   CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
   // Unlock DWT?
@@ -309,7 +315,7 @@ static inline int8_t dwt_init(void){
  *@param period This is the number of microseconds do delay for
  *@param intf_ptr Pointer to a peripheral if needed
  **/
-static inline void user_delay_us(uint32_t period, void* intf_ptr){
+void user_delay_us(uint32_t period, void* intf_ptr){ //static inline 
   (void)intf_ptr;
 
   // Use ARMs DWT->CYCCNT register, defined in core_cm4.h 
@@ -351,9 +357,11 @@ static int8_t user_spi_write_blocking(uint8_t reg_addr, const uint8_t *reg_data,
   };
 
   gpio_reset_pin(GPIOA, 4); // A4 is the NSS pin
-  spi_transmit_polling(spi_line, &data_packet);
-  spi_disable(SPI1, SPI_FULL_DUPLEX);
+  int8_t retval = spi_transmit_polling(spi_line, &data_packet);
   gpio_set_pin(GPIOA, 4);
+  //spi_disable(SPI1, SPI_FULL_DUPLEX);
+
+  if (retval != SPI_OK) return retval;
 
   return SENSOR_OK;
 }
@@ -387,6 +395,7 @@ static int8_t user_spi_read_blocking(uint8_t reg_addr, uint8_t* reg_data, uint32
   }
 
   spi_disable(SPI1, SPI_FULL_DUPLEX);
+  //mymemmove(reg_data, &reg_data[1], len);
 
   return SENSOR_OK;
 }
@@ -400,10 +409,28 @@ static int8_t user_spi_read_blocking(uint8_t reg_addr, uint8_t* reg_data, uint32
 int8_t manager_read_sensor_data(uint8_t compensate_sensor, char* sensor_data_str){
   if(!sensor_data_str) return SENSOR_ERR_INVALID_PARAM;
   
+  // Initialise settings struct with default values
+  const struct bme280_settings settings = {
+    .osr_t = BME280_OVERSAMPLING_1X,
+    .osr_h = BME280_OVERSAMPLING_1X,
+    .osr_p = BME280_OVERSAMPLING_1X,
+    .filter = BME280_FILTER_COEFF_OFF,
+    .standby_time = BME280_STANDBY_TIME_0_5_MS
+  }; 
+
+  uint32_t max_delay;
+  int8_t retval;
+
+  retval = bme280_cal_meas_delay(&max_delay, &settings);
   // Initialise sensor data struct
   struct bme280_data bme280_thp = {(uint32_t)0};
 
-  int8_t retval = bme280_get_sensor_data(compensate_sensor, &bme280_thp, &bme280_dev_ctx);
+  retval = bme280_set_sensor_mode(BME280_POWERMODE_FORCED, &bme280_dev_ctx);
+  if(retval != BME280_OK) return retval;
+
+  user_delay_us(max_delay, SPI1); // Measurement time can vary
+
+  retval = bme280_get_sensor_data(compensate_sensor, &bme280_thp, &bme280_dev_ctx);
   if (retval != BME280_OK) return retval;
 
   retval =  sensor_data_to_str(&bme280_thp, sensor_data_str);

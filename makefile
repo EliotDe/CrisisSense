@@ -78,7 +78,8 @@ C_SRC = \
 	src/managers/comms_manager.c \
 	src/managers/logging_manager.c \
 	src/managers/sensor_manager.c \
-	src/managers/debugging_manager.c
+	src/managers/debugging_manager.c \
+	src/utils/utils.c \
 	#tests/main_test.c
 
 CMSIS_C_SRC = $(CMSIS_DEVICE_DIR)/system_stm32l4xx.c 
