@@ -19,6 +19,7 @@
 
 #define SENSOR_TEMP_SCALE 2u  // BME280_data -> temp = degrees celsius * 100
 #define SENSOR_HUM_SCALE 3u   // BME280_data -> humidity = %RH * 1000
+#define SENSOR_PRES_SCALE 4u
 
 #define SPI_DMA_RX_EN  1
 #define SPI_DMA_TX_EN  1
@@ -66,7 +67,7 @@ static int8_t manager_gpio_pin_config(GPIO_TypeDef* gpio_port, uint8_t gpio_pin,
 static int8_t user_spi_read_blocking(uint8_t reg_addr, uint8_t* reg_data, uint32_t len, void* intf_ptr);
 static int8_t user_spi_write_blocking(uint8_t reg_addr, const uint8_t *reg_data, uint32_t len, void *intf_ptr);
 
-static uint8_t uint32_to_str(uint32_t num, char* buffer);
+//static uint8_t uint32_to_str(uint32_t num, char* buffer);
 static uint8_t scaled_to_str(uint32_t num, uint8_t scale, char* buffer);
 static int8_t sensor_data_to_str(const struct bme280_data* sensor_data, char* buffer);
 
@@ -79,7 +80,7 @@ static int8_t sensor_data_to_str(const struct bme280_data* sensor_data, char* bu
 /**
  * @brief Initiates Sensor Manager 
  */
-int8_t manager_init() {
+int8_t sensor_manager_init() {
     int8_t retval;
 
     retval = manager_rcc_config();
@@ -422,6 +423,7 @@ int8_t manager_read_sensor_data(uint8_t compensate_sensor, char* sensor_data_str
   int8_t retval;
 
   retval = bme280_cal_meas_delay(&max_delay, &settings);
+  if(retval != BME280_OK) return retval;
   // Initialise sensor data struct
   struct bme280_data bme280_thp = {(uint32_t)0};
 
@@ -498,23 +500,23 @@ static uint8_t scaled_to_str(uint32_t num, uint8_t scale, char* buffer){
  * 
  * @retval Size of the returned string
  */
-static uint8_t uint32_to_str(uint32_t num, char* buffer){
-  char tmp[11];
+// static uint8_t uint32_to_str(uint32_t num, char* buffer){
+//   char tmp[11];
 
-  int8_t index = 0;
-  do{
-    tmp[index++] = '0' + num % 10;
-    num /= 10;
-  }while(num > 0);
+//   int8_t index = 0;
+//   do{
+//     tmp[index++] = '0' + num % 10;
+//     num /= 10;
+//   }while(num > 0);
 
-  for(int8_t j = 0; j < index; j++){
-    buffer[j] = tmp[index - j - 1];
-  }
+//   for(int8_t j = 0; j < index; j++){
+//     buffer[j] = tmp[index - j - 1];
+//   }
 
-  buffer[index] = '\0';
+//   buffer[index] = '\0';
 
-  return index;
-}
+//   return index;
+// }
 
 /**
  * @brief Converts a bme280_data struct to a string
@@ -529,21 +531,38 @@ static int8_t sensor_data_to_str(const struct bme280_data* sensor_data, char* bu
 
   char* p = buffer;
   uint8_t len;
+  int8_t retval;
 
   // temperatrue - 
+  retval = mymemcpy(p, "temp: ", 6);
+  if (retval != UTILS_OK) return SENSOR_ERR;
+  p += 6;
   len = scaled_to_str(sensor_data->temperature, SENSOR_TEMP_SCALE, p);
   p += len;
+  *p++ = '\r';
   *p++ = '\n';
 
   // humidity
+  retval = mymemcpy(p, "humidity: ", 10);
+  if (retval != UTILS_OK) return SENSOR_ERR;
+  p += 10;
   len = scaled_to_str(sensor_data->humidity, SENSOR_HUM_SCALE, p);
   p += len;
+  *p++ = '\r';
   *p++ = '\n';
 
   // pressure
-  len = uint32_to_str(sensor_data->pressure, p);
+  retval = mymemcpy(p, "pressure: ", 10);
+  if (retval != UTILS_OK) return SENSOR_ERR;
+  p += 10;
+  len = scaled_to_str(sensor_data->pressure, SENSOR_PRES_SCALE, p);//uint32_to_str(sensor_data->pressure, p);
   p += len;
+  //*p++ = '\r';
   *p++ = '\n';
+  *p++ = '\r';
+  *p++ = '\n';
+
+  
 
   *p = '\0';
 

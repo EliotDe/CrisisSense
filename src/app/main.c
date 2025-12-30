@@ -24,33 +24,28 @@ void main(){
     LED_Init();
     while(1);
   }
-  Manager_Debug_Polling("Running...");
   
+  uint8_t manager_retval, read_retval;
   
-  uint8_t manager_retval, read_retval, debug_retval;
-  Manager_Debug_Polling("\nConfiguring Manager");
-  
-  manager_retval = manager_init();
-  Manager_Debug_Polling(manager_retval ? "\nManager OK" : "\nMangager Failed");
-  
+  manager_retval = sensor_manager_init();
+  if (manager_retval != SENSOR_OK) LED_Init();
+
   // Every five minutes:
-  Manager_Debug_Polling("\nReading Sensor");
-  char buffer[100];
-  for(uint8_t i = 0; i < 100; i++){
-    buffer[i] = 0;
+  while(1){
+    // Re-write at the top of the terminal
+    Manager_Debug_Polling("\033[H");
+    char buffer[100];
+    for(uint8_t i = 0; i < 100; i++){
+      buffer[i] = 0;
+    }
+    read_retval = manager_read_sensor_data(COMPENSATE_SENSOR_DATA, buffer);
+
+    if (read_retval == SENSOR_OK)
+      Manager_Debug_Polling(buffer);
+
+    // Move away from this delay function
+    user_delay_us(1000000, SPI1);
   }
-  read_retval = manager_read_sensor_data(COMPENSATE_SENSOR_DATA, buffer);
-  Manager_Debug_Polling(read_retval ? "\nSensor Read OK" : "\nSensor Read Failed");
-
-  if (read_retval)
-    debug_retval = Manager_Debug_Polling(buffer);
-
-  if(manager_retval == 0 || read_retval == 0 || debug_retval == 0){
-    Manager_Debug_Polling("\nDebugging");
-    //LED_Init();
-  }
-
-  while(1);
 }
 
 

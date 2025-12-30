@@ -6,7 +6,8 @@
 
 typedef enum{
   SENSOR_OK,
-  SENSOR_ERR_INVALID_PARAM = -1
+  SENSOR_ERR = -1,
+  SENSOR_ERR_INVALID_PARAM = -2
 } sensor_err_t;
 
 // /**
@@ -69,7 +70,7 @@ typedef enum{
  */
 int8_t manager_read_sensor_data(uint8_t compensate_sensor, char* sensor_data);
 
-int8_t manager_init();
+int8_t sensor_manager_init();
 
 int8_t dwt_init(void);
 

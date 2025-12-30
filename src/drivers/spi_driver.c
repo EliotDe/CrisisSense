@@ -650,30 +650,12 @@ int8_t spi_transfer_polling(SPI_TypeDef* spi_line,
         if (i > 0){
           ((uint8_t *)rx_buffer)[i - 1] = rx;
         }
-        // if (i == 0){
-        //   dummy_char = *(volatile uint8_t *)&spi_line->DR;
-        //   (void)dummy_char;
-        // }
-        // else{
-        //   uint8_t* char_buffer = (uint8_t*)rx_buffer;
-        //   char_buffer[i-1] = *(volatile uint8_t *)&spi_line->DR;
-        //   //__DSB();
-        // }
       }
       else{
         uint16_t rx = spi_line->DR;
         if (i > 0){
           ((uint16_t *)rx_buffer)[i - 1] = rx;
         }
-        // if (i == 0){
-        //   dummy_short = spi_line->DR;
-        //   (void)dummy_short;
-        // }
-        // else{
-        //   uint16_t* short_buffer = (uint16_t*)rx_buffer;
-        //   short_buffer[i-1] = spi_line->DR;
-        //   //__DSB();
-        // }
       }
     }
 
@@ -688,55 +670,6 @@ int8_t spi_transfer_polling(SPI_TypeDef* spi_line,
 
 
 /*=================== SPI RECEIVER FUNCTIONS ===================*/
-
-/**
- * @brief A Blocking Function for Receiveing Data on the SPI peripheral
- * @param spi_line The SPI peripheral to read from
- * @param buffer The Location in memory to store the received data
- */
-int8_t spi_receive_polling(SPI_TypeDef* spi_line, void* buffer, uint32_t length, uint8_t data_size){
-  // Null ptr Validation
-  if(!spi_line || !buffer)
-    return SPI_ERR_INVALID_PARAM;
-
-  // Range Validation
-  if(data_size < SPI_DATA_SIZE_MIN ||
-     data_size > SPI_DATA_SIZE_MAX)
-    return SPI_ERR_INVALID_PARAM;
-
-  if(spi_line->CR1 & SPI_CR1_SPE)
-    return SPI_ERR_BUSY;
-  
-  spi_line->CR1 |= SPI_CR1_SPE;
-  __DSB();
-
-  uint32_t timeout = SPI_RXNE_TIMEOUT;
-  uint32_t received = 0;
-
-  if(data_size <= SPI_DATA_SIZE_CHAR){ // If data can be represented as a char, cast to uint8_t
-    uint8_t* char_buffer = (uint8_t*)buffer;
-    while(received < length){ 
-      while(!(spi_line->SR & SPI_SR_RXNE)){ // Wait for data to read
-        if(--timeout == 0)
-          return SPI_ERR_TIMEOUT;
-      }
-      char_buffer[received++] = (uint8_t)spi_line->DR;
-    }
-  }
-  else { // If data cannot be represented as a char, cast to uint16_t (range validation already done)
-    uint16_t* short_buffer = (uint16_t*)buffer;
-    while(received < length){ 
-      while(!(spi_line->SR & SPI_SR_RXNE)){ // Wait for data to read
-        if(--timeout == 0)
-          return SPI_ERR_TIMEOUT;
-      }
-      short_buffer[received++] = (uint16_t)spi_line->DR;
-    }
-  }
-
-  return SPI_OK;
-}
-
 
 /**
  * @brief Helper function to be used in conjunction with DMA functions in order to communicate via DMA

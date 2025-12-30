@@ -775,6 +775,7 @@ int8_t bme280_get_sensor_data(uint8_t sensor_comp, struct bme280_data *comp_data
      * the sensor
      */
     //uint8_t reg_data[BME280_LEN_P_T_H_DATA] = { 0 };
+    // cppcheck-suppress variableScope
     struct bme280_uncomp_data uncomp_data = { 0 };
 
     if (comp_data != NULL)
@@ -1115,6 +1116,7 @@ static void parse_sensor_data(const uint8_t *reg_data, struct bme280_uncomp_data
  */
 static int8_t write_power_mode(uint8_t sensor_mode, struct bme280_dev *dev)
 {
+    // cppcheck-suppress variableScope
     uint8_t reg_data[BME280_LEN_P_T_H_DATA] = { 0 };
 
     int8_t rslt;
@@ -1134,6 +1136,7 @@ static int8_t write_power_mode(uint8_t sensor_mode, struct bme280_dev *dev)
         /* Write the power mode in the register */
         rslt = bme280_set_regs(&reg_addr, &sensor_mode_reg_val, 1, dev);
         dev->delay_us(2300, dev->intf_ptr);
+        // cppcheck-suppress redundantAssignment
         rslt = bme280_get_regs(BME280_REG_DATA, reg_data, 8, dev);
     }
 
