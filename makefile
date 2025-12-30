@@ -53,9 +53,10 @@ LDSCRIPT = stm32l432kc.ld
 # Flags
 MCU = stm32l432kc
 WFLAGS = -Wall -Wextra -Werror -Wshadow
-CFLAGS = -mcpu=cortex-m4 -mthumb -O2 -ffreestanding -g $(WFLAGS)
+CFLAGS = -mcpu=cortex-m4 -mthumb -O0 -ffreestanding -g $(WFLAGS)
+CFLAGS += -DBME280_64BIT_ENABLE #Use 64-bit integers for sensor compensation in bme280
 CFLAGS += $(addprefix -I,$(INCLUDE_DIRS)) -I.
-LDFLAGS = -T $(LDSCRIPT) -nostdlib -Wl,-Map=$(MAP)
+LDFLAGS = -T $(LDSCRIPT) -lgcc -Wl,-Map=$(MAP) -nostdlib 
 
 # Flags - Testing
 TEST_WFLAGS = -Wall -Wextra -std=c99
@@ -73,10 +74,12 @@ C_SRC = \
 	src/drivers/dma_driver.c \
 	src/drivers/rcc_driver.c \
 	src/drivers/gpio_driver.c \
+	src/drivers/bme280.c \
 	src/managers/comms_manager.c \
 	src/managers/logging_manager.c \
 	src/managers/sensor_manager.c \
-	src/managers/debugging_manager.c
+	src/managers/debugging_manager.c \
+	src/utils/utils.c \
 	#tests/main_test.c
 
 CMSIS_C_SRC = $(CMSIS_DEVICE_DIR)/system_stm32l4xx.c 

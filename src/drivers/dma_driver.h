@@ -83,11 +83,12 @@ typedef struct{
     dma_memsize_t mem_size;
     dma_peripheral_size_t periph_size;
     dma_circular_mode_t circular_mode;
-    dma_irq_mask_t interrupts;
+    dma_interrupts_t interrupts;
 }dma_channel_config_t;
 
 /************* DMA CONFIGURATION FUNCTIONS *************/
 uint8_t dma_config_channel(const DMA_TypeDef* dma_line, dma_channel_config_t* cfg, dma_err_t* error);
+uint8_t dma_disable_channel(DMA_Channel_TypeDef* channel, dma_err_t* error);
 /********************* DMA HELPERS *********************/
 static inline void dma_register_set_bit(uint32_t* reg, uint32_t bit){*reg |= bit;}
 static inline void dma_register_clear_bit(uint32_t* reg, uint32_t bit){*reg &= ~bit;}

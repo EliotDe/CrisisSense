@@ -56,10 +56,10 @@ typedef enum{
 typedef struct{
   GPIO_TypeDef* gpio_peripheral;
   uint8_t gpio_pin;
-  gpio_moder_t mode;
-  gpio_otyper_t output_type;
-  gpio_pupdr_t pupdr_config;
-  gpio_ospeedr_t output_speed;
+  uint32_t mode;
+  uint32_t output_type;
+  uint32_t pupdr_config;
+  uint32_t output_speed;
   uint8_t alternate_function_code;
 }gpio_config_t;
 
@@ -70,5 +70,20 @@ uint8_t gpio_config_pin(gpio_config_t* cfg, gpio_error_t* error);
 /*==============CONFIGURATION HELPERS==============*/
 static inline void gpio_register_set_bit(uint32_t* reg, uint32_t bit){*reg |= bit;}
 static inline void gpio_register_clear_bit(uint32_t* reg, uint32_t bit){*reg &= ~bit;}
+
+/**
+ * @brief This uses the BSRR register to set or reset a pin
+ */ 
+static inline void gpio_set_pin(GPIO_TypeDef* port, uint8_t pin){
+  if (!port) return;
+  port->BSRR = 1 << pin;
+}
+
+static inline void gpio_reset_pin(GPIO_TypeDef* port, uint8_t pin){
+  if (!port) return;
+  port->BSRR = 1 << (16 + pin);
+}
+
+
 
 #endif

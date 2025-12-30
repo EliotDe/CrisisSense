@@ -32,6 +32,7 @@ Thumbs.db
 # Logs
 *.log
 
-# Temporary / backup files
+# Vim Temporary / backup files
 *~
-*.sw
+*.swp
+*.swo
