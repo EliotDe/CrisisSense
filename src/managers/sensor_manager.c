@@ -287,6 +287,7 @@ static int8_t manager_bme280_config(void){
   // uint8_t sensor_mode;
   // retval = bme280_get_sensor_mode(&sensor_mode, &bme280_dev_ctx);
   uint8_t status;
+  // cppcheck-suppress unusedVariable
   retval = bme280_get_regs(BME280_REG_STATUS, &status, 1, &bme280_dev_ctx);
 
   return SENSOR_OK;

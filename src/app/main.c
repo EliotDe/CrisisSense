@@ -25,6 +25,7 @@ void main(){
     while(1);
   }
   
+  // cppcheck-suppress variableScope
   uint8_t manager_retval, read_retval;
   
   manager_retval = sensor_manager_init();
